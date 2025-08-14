@@ -12,7 +12,7 @@ export default function Layout({ children }) {
       <Header />
 
       <div className="flex-fill d-flex">
-        {/* Sidebar only if logged in */}
+        {/* Sidebar only if logged in
         {loading ? (
           <div className="text-center mt-5">Loading...</div>
         ) : user ? (
@@ -21,7 +21,8 @@ export default function Layout({ children }) {
           ) : (
             <Sidebar role={user.role} />
           )
-        ) : null}
+        ) : null} */}
+        <Sidebar />
 
         <main className="flex-fill container py-4">{children}</main>
       </div>

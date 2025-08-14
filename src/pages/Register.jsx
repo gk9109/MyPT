@@ -1,15 +1,16 @@
 import React, { useRef, useState } from "react";
-import { auth, db } from "../firebase/config";
-import { doc, setDoc } from "firebase/firestore";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../firebase/config";
+import { createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import { createUserProfile, updateUserProfile } from "../Services/subscriptions";
 
 export default function Register() {
   const [role, setRole] = useState("client");
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const nameRef = useRef();
+  const firstNameRef = useRef();
+  const lastNameRef = useRef();
   const emailRef = useRef();
   const passwordRef = useRef();
   const phoneRef = useRef();
@@ -19,35 +20,49 @@ export default function Register() {
     e.preventDefault();
     setError("");
 
-    const name = nameRef.current.value;
-    const email = emailRef.current.value;
-    const password = passwordRef.current.value;
-    const phone = phoneRef.current.value;
-    const location = locationRef.current.value;
+    const firstName = firstNameRef.current.value.trim();
+    const lastName = lastNameRef.current.value.trim();
+    const email = emailRef.current.value.trim();
+    const password = passwordRef.current.value.trim();
+    const phone = phoneRef.current.value.trim();
+    const location = locationRef.current.value.trim();
 
-    if (!name || !email || !password || !phone || !location || !role) {
+    if (!firstName || !lastName || !email || !password || !phone || !location || !role) {
       setError("All fields are required");
       return;
     }
 
     try {
-      const userCred = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCred.user;
+      // Create the auth user
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      const uid = cred.user.uid;
 
-      await setDoc(doc(db, role === "coach" ? "users" : "sub-clients", user.uid), {
-        uid: user.uid,
-        name,
-        email,
-        role,
-        phone,
-        location,
-        createdAt: new Date(),
-      });
+      try {
+        // Create the Firestore user profile (uniform schema under users/{uid})
+        await createUserProfile({
+          uid,
+          email,
+          role,        // "client" or "coach"
+          firstName,
+          lastName,
+          phone,
+          location,
+        });
 
-      navigate("/profile");
+        navigate("/profile");
+
+      } catch (e) {
+        await deleteUser(cred.user);
+        throw e;
+      }
     } catch (err) {
-      console.error(err);
+      if (err.code ==="auth/email-already-in-use"){
+        setError("Email already in use. Try logging in.");
+      } else {
+        console.error(err);
       setError(err.message);
+      }
+      
     }
   };
 
@@ -59,8 +74,13 @@ export default function Register() {
         {error && <div className="alert alert-danger">{error}</div>}
 
         <div className="mb-3">
-          <label className="form-label">Full Name</label>
-          <input type="text" ref={nameRef} className="form-control" placeholder="Your Name" />
+          <label className="form-label">First Name</label>
+          <input type="text" ref={firstNameRef} className="form-control" placeholder="First Name" />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Last Name</label>
+          <input type="text" ref={lastNameRef} className="form-control" placeholder="Last Name" />
         </div>
 
         <div className="mb-3">
@@ -75,7 +95,7 @@ export default function Register() {
 
         <div className="mb-3">
           <label className="form-label">Phone Number</label>
-          <input type="text" ref={phoneRef} className="form-control" placeholder="+1 234 567 890" />
+          <input type="text" ref={phoneRef} className="form-control" placeholder="+972 50-000-0000" />
         </div>
 
         <div className="mb-3">

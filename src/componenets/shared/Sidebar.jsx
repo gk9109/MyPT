@@ -1,50 +1,60 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+// src/components/shared/Sidebar.jsx
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../../firebase/AuthContext";
 
-export default function Sidebar({ role }) {
+export default function Sidebar() {
+  const { user, loading } = useAuth();
+  // useLocation() (React Router) returns the current URL info: { pathname, search, hash, state, key }
+  // We destructure to grab only pathname (e.g. "/search").
+  const { pathname } = useLocation();
+
+  // While auth is resolving, or if there's no user -> no sidebar at all.
+  if (loading || !user) return null;
+
+  
+  const role = user.role; // 'client' | 'coach' | 'admin'
+
+  // Menu config
+  //arrays of objects, each object describes one sidebar link
+  
+  // menu items that every logged in user should see
+  const COMMON = [
+    { to: "/profile", label: "Profile", icon: "bi-person" },
+  ];
+
+  // menu items only clients should see 
+  const CLIENT = [
+    { to: "/search",   label: "Search",       icon: "bi-search" },
+    { to: "/diet",     label: "Diet Plan",    icon: "bi-egg" },
+    { to: "/workout",  label: "Workout Plan", icon: "bi-heart-pulse" },
+    { to: "/progress", label: "Progress",     icon: "bi-bar-chart-line" },
+  ];
+
+  // menu items only coaches should see
+  const COACH = [
+    { to: "/clients",          label: "Manage Clients", icon: "bi-people" },
+    { to: "/coach/nutrition",  label: "Nutrition",      icon: "bi-clipboard-heart" },
+  ];
+
+  // sum of items each role should see
+  // both can see common 
+  const items = role === "coach" ? [...COMMON, ...COACH] : [...COMMON, ...CLIENT];
+
   return (
-    <div
-      className="bg-white border-end vh-100 p-3 shadow-sm"
-      style={{ width: '220px' }}
-    >
+    <div className="bg-white border-end vh-100 p-3 shadow-sm" style={{ width: 220 }}>
       <h5 className="text-primary mb-4">Navigation</h5>
-
       <ul className="nav flex-column gap-2">
-        <li className="nav-item">
-          <Link to="/profile" className="nav-link text-dark fw-semibold">
-            <i className="bi bi-house me-2"></i> Profile
-          </Link>
-        </li>
-        <li className="nav-item">
-          <Link to="/diet" className="nav-link text-dark fw-semibold">
-            <i className="bi bi-egg me-2"></i> Diet Plan
-          </Link>
-        </li>
-        <li className="nav-item">
-          <Link to="/workout" className="nav-link text-dark fw-semibold">
-            <i className="bi bi-heart-pulse me-2"></i> Workout Plan
-          </Link>
-        </li>
-        <li className="nav-item">
-          <Link to="/progress" className="nav-link text-dark fw-semibold">
-            <i className="bi bi-bar-chart-line me-2"></i> Progress
-          </Link>
-        </li>
+        {items.map(({ to, label, icon }) => (
+          <li key={to} className="nav-item">
+            <Link
+              to={to}
+              className={`nav-link fw-semibold ${pathname === to ? "active text-primary" : "text-dark"}`}
+            >
+              <i className={`bi ${icon} me-2`} /> {label}
+            </Link>
+          </li>
+        ))}
       </ul>
-
-      {role === 'coach' && (
-        <>
-          <hr />
-          <h6 className="text-secondary mt-3">Coach Tools</h6>
-          <ul className="nav flex-column gap-2">
-            <li className="nav-item">
-              <Link to="/clients" className="nav-link text-dark fw-semibold">
-                <i className="bi bi-people me-2"></i> Manage Clients
-              </Link>
-            </li>
-          </ul>
-        </>
-      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updatePassword, sendEmailVerification } from "firebase/auth";
 import { auth } from "./config";
 
+// ** Thin wrappers for sign-up / sign-in / sign-out. **
 
 //create user with email and password
 export const docCreateUserWithEmailAndPassword = async (email, password) => {

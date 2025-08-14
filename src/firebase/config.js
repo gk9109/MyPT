@@ -3,7 +3,11 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
-// 🔐 Your own Firebase config from the Firebase Console
+// ** Initializes Firebase once and exports auth and db
+// so the rest of the app can talk to Firebase Auth + Firestore.
+// Everything else imports from here. **
+
+// Firebase config from the Firebase Console
 const firebaseConfig = {
   //Authenticates requests from your app to Firebase services. 
   apiKey: "AIzaSyASSS-mrtP8s0CBc5Cu6XCufALLyd3tbls", 
@@ -19,10 +23,10 @@ const firebaseConfig = {
   appId: "1:429035927757:web:78fdd427ae408771c89184",
 };
 
-// ✅ Initialize Firebase
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// ✅ Export Firestore instance
+// Export Firestore instance
 export const db = getFirestore(app);
 
 export const auth = getAuth(app); 

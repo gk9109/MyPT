@@ -6,10 +6,11 @@ import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Layout from './componenets/shared/Layout';
 import ProtectedRoute from './componenets/shared/ProtectedRoute';
-import CoachNutritionPage from './pages/CoachNutritionPage';
+// import CoachNutritionPage from './pages/CoachNutritionPage';
 import TraineeNutritionPage from './pages/TraineeNutritionPage';
 import DietRouter from './pages/DietRouter';
-import Sidebar from "./componenets/coach/CoachSidebar";
+import SearchPage from './pages/Clients/SearchPage';
+import GuestRoute from './componenets/shared/GuestRoute';
 
 
 
@@ -17,25 +18,39 @@ import Sidebar from "./componenets/coach/CoachSidebar";
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Home />} />
+      <Layout>
+
+        <Routes>
+          {/* public */}
+          <Route element={<GuestRoute />}>
+            <Route path="/home" element={<Home />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/coach/profile"
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
+          </Route>
+          
+          
+          
+          {/* any logged in user */}
+          <Route element={<ProtectedRoute />}>
+            <Route path='/profile' element={<Profile />} />
+          </Route>
+
+          {/* coaches only */}
+          <Route element={<ProtectedRoute allow={"coach"} />}>
+            {/* <Route path="/coach/nutrition" element={<NutritionForm />} /> */}
+          </Route>
+
+          {/* clients only */}
+          <Route element={<ProtectedRoute allow={["client"]} />}>
+            <Route path="/diet" element={<TraineeNutritionPage />} />
             <Route path="/diet" element={<DietRouter />} />
-            <Route path="/coach-nutrition" element={<CoachNutritionPage />} />
-            <Route path="/trainee-nutrition" element={<TraineeNutritionPage />} />
-          </Routes>
-        </Layout>
-      </AuthProvider>
+            {/* <Route path="/coach-nutrition" element={<CoachNutritionPage />} /> */}
+            {/* <Route path="/trainee-nutrition" element={<TraineeNutritionPage />} /> */}
+            <Route path='/search' element={<SearchPage/>} />
+          </Route>
+                 
+        </Routes>
+      </Layout>
     </BrowserRouter>
   );
 }
