@@ -1,9 +1,9 @@
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "../firebase/config";
+import { auth, db } from "../../firebase//config";
 import { doc, getDoc } from "firebase/firestore";
-import { useAuth } from "../firebase/AuthContext";
+import { useAuth } from "../../firebase/AuthContext";
 
 export default function Login() {
   const { user } = useAuth();
@@ -48,7 +48,7 @@ export default function Login() {
         //navigates to users profile
         navigate("/profile");
       } else {
-        const subClientDocRef = doc(db, "sub-clients", user.uid);
+        const subClientDocRef = doc(db, "clients", user.uid);
         const clientUserDataObj = await getDoc(subClientDocRef);
         if (clientUserDataObj.exists()) {
           navigate("/profile", { state: { user: clientUserDataObj.data() } });

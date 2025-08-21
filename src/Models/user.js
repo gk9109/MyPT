@@ -1,4 +1,3 @@
-// src/models/user.js
 import { serverTimestamp } from "firebase/firestore";
 
 // ** BUILDS A NORMALIZED USER PROFILE OBJECT **
@@ -38,6 +37,7 @@ export function makeUserProfile({
     .toLowerCase();
 
   /** @type {AppUser} */
+  // create a user by schema
   const user = {
     uid,
     role,
@@ -49,5 +49,6 @@ export function makeUserProfile({
     location,
     createdAt: serverTimestamp(),
   };
+  
   return user;
 }

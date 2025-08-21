@@ -1,7 +1,6 @@
 import Footer from "./Footer";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
-import CoachSidebar from "../coach/CoachSidebar";
 import { useAuth } from "../../firebase/AuthContext";
 
 export default function Layout({ children }) {

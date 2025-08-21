@@ -1,51 +1,77 @@
-// src/Services/subscriptions.js   (service layer for Firestore user profiles)
 import { db } from "../firebase/config";
-import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
-import { makeUserProfile } from "../Models/user";
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "firebase/firestore";
+import { SUBS_COLLECTION, subId } from "../Models/subscriptions";
 
-/** choose the correct collection by role */
-function colByRole(role) {
-  const r = String(role || "").toLowerCase();
-  return r === "coach" ? "users" : "sub-clients"; // clients -> "sub-clients"
+// this file contain subscription related functions.
+// subscription between a client and a coach works by creating a documen with a unique id.
+// this id is a product of the coach's and cliet's id's unified.
+
+// Create doc ref with coach and user id and set status to "active" activate
+export async function subscribeToCoach({ coachUid, clientUid }) {
+  // The subId is a unique identifier for the document in the "subscriptions" collection.
+  // It's created by combining the coachId and clientId,
+  // which ensures that each subscription document is uniquely identifiable based on the specific
+  // coach-client pairing.
+  const ref = doc(db, SUBS_COLLECTION, subId(coachUid, clientUid));
+  
+  // doing this before setting doc preserves createdAt when reactivating the same pair.
+  // if the doc exists we keep its original createdAt and only bump updatedAt.
+  const snap = await getDoc(ref);
+
+  // setting doc with data
+  await setDoc(ref, {
+    coachUid,
+    clientUid,
+    status: "active",
+    createdAt: snap.exists() ? snap.data().createdAt : serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    createdBy: clientUid,
+    // merge: true → updates only the fields you pass, leaving others untouched.
+    // no merge → replaces the whole document.
+  }, { merge: true });
 }
 
-/** Create the Firestore user profile and return it. */
-export async function createUserProfile({ uid, email, role, firstName, lastName, phone, location }) {
-  // pick collection by role (this was hardcoded to "users" before)
-  const col = colByRole(role);
-  const ref = doc(db, col, uid);
+// cancel subscription (soft delete)
+export async function unsubscribeFromCoach({ coachUid, clientUid }) {
+  //doc ref
+  const ref = doc(db, SUBS_COLLECTION, subId(coachUid, clientUid));
 
-  const profile = makeUserProfile({ uid, email, role, firstName, lastName, phone, location });
-  await setDoc(ref, profile, { merge: false }); // keep a clean shape
-  return profile;
-}
-
-/** Get a profile by uid. Tries coaches first, then sub-clients. */
-export async function getUserProfile(uid) {
-  // try coaches ("users")
-  let ref = doc(db, "users", uid);
-  let snap = await getDoc(ref);
-  if (snap.exists()) return snap.data();
-
-  // fallback to sub-clients
-  ref = doc(db, "sub-clients", uid);
-  snap = await getDoc(ref);
-  return snap.exists() ? snap.data() : null;
-}
-
-/** Update a profile. If role is known, we use it; otherwise try both collections. */
-export async function updateUserProfile(uid, patch, role) {
-  const knownCol = role ? colByRole(role) : null;
-
-  if (knownCol) {
-    await updateDoc(doc(db, knownCol, uid), patch);
+  // checking if doc exists, returns if not
+  if (!(await getDoc(ref)).exists()){
+    console.log("doc does not exist");
     return;
   }
+  // update doc to change status from "active" to "canceled"
+  await updateDoc(ref, { status: "canceled", updatedAt: serverTimestamp() });
+  console.log("doc updated, subscription canceled")
+}
 
-  // attempt update in "users", then in "sub-clients"
-  try {
-    await updateDoc(doc(db, "users", uid), patch);
-  } catch {
-    await updateDoc(doc(db, "sub-clients", uid), patch);
-  }
+// for a coach. Returns an array of that coach’s client UIDs.
+export async function coach_ClientList(coachUid) {
+   // setting a query for searching in collection
+  const query = query(
+    collection(db, SUBS_COLLECTION),
+    where("coachUid", "==", coachUid),
+    where("status", "==", "active")
+  );
+  
+  // array of matching docs by query
+  const snap = await getDocs(query);
+  // return an array of obejects containing doc id's and data objects 
+  return snap.docs.map(d => ({ ...d.data(), docId: d.id }));
+}
+
+// for a client. Returns an array of that client’s coach UIDs.
+export async function client_CoachList(clientUid) {
+  // setting a query for searching in collection
+  const query = query(
+    collection(db, SUBS_COLLECTION),
+    where("clientUid", "==", clientUid),
+    where("status", "==", "active")
+  );
+
+  // array of matching docs
+  const snap = await getDocs(query);
+  // return an array of obejects containing doc id's and data objects
+  return snap.docs.map(d => ({ ...d.data(), docId: d.id }));
 }

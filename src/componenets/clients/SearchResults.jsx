@@ -1,26 +1,24 @@
-export default function SearchResults({ results = [] }) {
+// src/components/search/SearchResults.jsx
+import CoachCard from "./CoachCard";
+import { subscribeToCoach } from "../../Services/subscriptions";
+
+export default function SearchResults({ results = [], clientUid, onView }) {
   if (!results.length) return null;
+
+  const onSubscribe = async (coach) => {
+    if (!clientUid) return; // optionally show a toast: "Please sign in"
+    await subscribeToCoach({ coachUid: coach.uid, clientUid });
+  };
 
   return (
     <div className="d-flex flex-column align-items-center">
-      {results.map((u, i) => (
-        <div
-          key={i}
-          className="card p-3 mb-3"
-          style={{ width: "100%", maxWidth: "500px" }}
-        >
-          {/* Your original card content */}
-          <h5>{`${u.firstName || ""} ${u.lastName || ""}`}</h5>
-          {u.location && <p>{u.location}</p>}
-          <p>{u.email}</p>
-          <p>{u.phone}</p>
-          <p>{u.uid}</p>
-          <p>Joined {new Date(u.createdAt.seconds * 1000).toLocaleDateString()}</p>
-
-          <div>
-            <button className="btn btn-primary me-2">View</button>
-            <button className="btn btn-outline-secondary">Subscribe</button>
-          </div>
+      {results.map((coach) => (
+        <div key={coach.uid || coach.id} className="w-100 mb-3" style={{ maxWidth: 520 }}>
+          <CoachCard
+            coach={coach}
+            onView={onView}
+            onFavorite={() => onSubscribe(coach)}
+          />
         </div>
       ))}
     </div>

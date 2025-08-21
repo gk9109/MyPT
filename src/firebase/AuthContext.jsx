@@ -1,72 +1,95 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc, collection, query, where, limit, getDocs } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../firebase/config";
 
+// AuthContext.jsx
+// Watches Firebase Auth state (login/logout).
+// Uses helper (resolveProfileAndRole) to fetch the user’s Firestore doc and role.
+// Stores the merged user { uid, email, role, ...profile } in React context.
+// Makes this user object global across the app via AuthProvider.
+// Provides: { user, loading, logout } that any component can access with useAuth().
+
+
+//this creates aglobal var (AuthContext) that can contain user objexts, loading bools, and logout functions
 const AuthContext = createContext({ user: null, loading: true, logout: async () => {} });
 
-/** Try to locate the logged-in user's profile and role. */
+// Check Firestore profile and return role + profile data
 async function resolveProfileAndRole(uid) {
-  // 1) Coaches live in "users" (doc id = uid)
-  const coachSnap = await getDoc(doc(db, "users", uid));
+  // 1. Look in coaches
+  const coachSnap = await getDoc(doc(db, "coaches", uid));
   if (coachSnap.exists()) {
     return { role: "coach", profile: coachSnap.data() };
   }
 
-  // 2) Trainees live in a sub-clients collection
-  const subCols = ["sub-clients"];
-  for (const colName of subCols) {
-    // Try by doc id = uid
-    const byId = await getDoc(doc(db, colName, uid));
-    if (byId.exists()) return { role: "sub-clients", profile: byId.data() };
-
-    // Fallback: query by an authUid field if your doc ids aren’t the uid
-    const q = query(collection(db, colName), where("authUid", "==", uid), limit(1));
-    const qs = await getDocs(q);
-    if (!qs.empty) return { role: "sub-clients", profile: qs.docs[0].data() };
+  // 2. Look in clients
+  const clientSnap = await getDoc(doc(db, "clients", uid));
+  if (clientSnap.exists()) {
+    return { role: "client", profile: clientSnap.data() };
   }
 
-  // Not found → treat as no role
+  // 3. Not found
   return { role: null, profile: {} };
 }
 
+//Listens for login/logout with onAuthStateChanged.
+//Resolves role + profile from Firestore.
+//Stores merged user object in context.
+//Provides { user, loading, logout } to the app.
+
 export function AuthProvider({ children }) {
+  // Local state for the current user and a loading flag
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Run once when the component mounts
   useEffect(() => {
+    // onAuthStateChanged -> Subscribe to Firebase Auth changes (login/logout)
+    // auth from config.js
     const unsub = onAuthStateChanged(auth, async (fbUser) => {
       if (!fbUser) {
+        // Case 1: no user is logged in
         setUser(null);
         setLoading(false);
         return;
       }
+
       try {
+        // Case 2: user is logged in → resolve role/profile from Firestore
         const { role, profile } = await resolveProfileAndRole(fbUser.uid);
-        // Keep your current shape; just add role + merge profile
+
+        // Merge Firebase Auth data + Firestore profile into one object
         setUser({
-          uid: fbUser.uid,
-          email: fbUser.email,
-          role,           // <-- used by <ProtectedRoute allow="...">
-          ...profile,     // your existing profile fields
+          uid: fbUser.uid,     // always the Auth uid
+          email: fbUser.email, // email from Auth
+          role,                // "coach" | "client" | "admin" | null
+          ...profile,          // any extra fields from Firestore
         });
       } catch (e) {
         console.error("AuthContext resolve error:", e);
+        // fallback user if Firestore lookup failed
         setUser({ uid: fbUser.uid, email: fbUser.email, role: null });
       } finally {
+        // Auth check finished
         setLoading(false);
       }
     });
+
+    // Cleanup: unsubscribe on unmount
     return unsub;
   }, []);
 
+  // Simple wrapper for Firebase logout
   const logout = async () => { await signOut(auth); };
 
+  // Provide user, loading, and logout to the rest of the app
+  // this wrapper takes place in main.jsx
   return (
     <AuthContext.Provider value={{ user, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );
 }
+
 
 export const useAuth = () => useContext(AuthContext);

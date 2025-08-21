@@ -1,7 +1,10 @@
-// src/components/clients/CoachCard.jsx
 import React from "react";
+import { subscribeToCoach, unsubscribeFromCoach } from '../../Services/subscriptions'
+import { useAuth } from "../../firebase/AuthContext";
 
-export default function CoachCard({ coach, onView, onFavorite }) {
+export default function CoachCard({ coach, onView }) {
+  const { user } = useAuth()
+
   if (!coach) return null;
 
   const {
@@ -84,9 +87,9 @@ export default function CoachCard({ coach, onView, onFavorite }) {
             </button>
             <button
               className="btn btn-sm btn-outline-secondary"
-              onClick={() => onFavorite?.(coach)}
+              onClick={() => subscribeToCoach(coach.uid, user.uid)}
             >
-              Favorite
+              Subscribe
             </button>
           </div>
         </div>

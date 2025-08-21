@@ -1,35 +1,20 @@
-import React, { useState } from "react";
+// src/components/clients/ClientList.jsx
+import ClientCard from "./ClientCard";
 
-export default function ClientList() {
-  const [query, setQuery] = useState("");
+export default function ClientList({ clients = [], onSelect }) {
+  if (!clients.length) return <p>No clients found.</p>;
 
-  const handleSearch = () => {
-    console.log("Searching for:", query);
-    // later: query Firestore for clients matching this
-  };
+  const sorted = [...clients].sort((a, b) =>
+    (a.firstName + a.lastName).localeCompare(b.firstName + b.lastName)
+  );
 
   return (
-    <div className="container py-4">
-      <h2 className="mb-4">Clients</h2>
-
-      <div className="input-group mb-3" style={{ maxWidth: "400px" }}>
-        <input
-          type="text"
-          className="form-control"
-          placeholder="Search clients by name or email"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <button
-          className="btn btn-primary"
-          type="button"
-          onClick={handleSearch}
-        >
-          Search
-        </button>
-      </div>
-
-      {/* here you’ll later render the search results */}
+    <div className="row g-3">
+      {sorted.map(client => (
+        <div key={client.uid || client.id} className="col-md-4">
+          <ClientCard client={client} onSelect={onSelect} />
+        </div>
+      ))}
     </div>
   );
 }

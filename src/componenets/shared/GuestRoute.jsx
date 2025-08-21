@@ -1,20 +1,17 @@
-// routes/GuestRoute.jsx
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../../firebase/AuthContext";
 
+// Restricts access to pages meant for guests (not logged in).
+// - If user IS logged in -> redirect to /profile
+// - If user is NOT logged in -> render the guest page (children or <Outlet/>)
+
 export default function GuestRoute({ children }) {
-  //object deconstructing pulls named properties into vars:
-  // const auth = useAuth();
-  // const user = auth.user;
-  // const loading = auth.loading;
-  //is the same as:
-  // const { user, loading } = useAuth();
   const { user, loading } = useAuth();
 
+  // Wait until auth state is resolved
   if (loading) return null;
-  //replace tells React Router to replace the current history entry instead of pushing a new one.
-  //Why its needed:
-  //after redirecting, pressing Back won’t bounce the user back to the blocked page,
-  //and then forward again—better UX.
+
+  // If logged in -> redirect to /profile
+  // "replace" prevents sending user back here with Back button
   return user ? <Navigate to="/profile" replace /> : (children ?? <Outlet />);
 }

@@ -23,11 +23,17 @@ const firebaseConfig = {
   appId: "1:429035927757:web:78fdd427ae408771c89184",
 };
 
-// Initialize Firebase
+// Initialize the Firebase App with your project's config object.
+// This connects your local React app to your Firebase project in the cloud.
+// All Firebase services (Auth, Firestore, Storage, etc.) are attached to this app.
 const app = initializeApp(firebaseConfig);
 
-// Export Firestore instance
+// Firestore instance: your entry point to the Firestore database service.
+// Use this `db` object to read and write documents and collections in Firestore.
 export const db = getFirestore(app);
 
-export const auth = getAuth(app); 
+// Auth instance: your entry point to the Firebase Authentication service.
+// Use this `auth` object for creating accounts, signing in/out, and listening
+// to login state changes (onAuthStateChanged).
+export const auth = getAuth(app);
 

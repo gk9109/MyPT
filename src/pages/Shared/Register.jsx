@@ -1,8 +1,8 @@
 import React, { useRef, useState } from "react";
-import { auth } from "../firebase/config";
+import { auth } from "../../firebase/config";
 import { createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
-import { createUserProfile, updateUserProfile } from "../Services/subscriptions";
+import { createUserProfile } from "../../Services/users";
 
 export default function Register() {
   const [role, setRole] = useState("client");

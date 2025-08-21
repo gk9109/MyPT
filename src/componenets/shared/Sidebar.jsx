@@ -32,8 +32,9 @@ export default function Sidebar() {
 
   // menu items only coaches should see
   const COACH = [
-    { to: "/clients",          label: "Manage Clients", icon: "bi-people" },
-    { to: "/coach/nutrition",  label: "Nutrition",      icon: "bi-clipboard-heart" },
+    { to: "/clients",          label: "Clients",        icon: "bi-people" },
+    { to: "/nutrition",        label: "Nutrition",      icon: "bi-clipboard-heart" },
+    { to: "/workout",          label: "workout",        icon: "bi-clipboard-heart" },
   ];
 
   // sum of items each role should see
