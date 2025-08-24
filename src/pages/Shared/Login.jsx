@@ -41,7 +41,7 @@ export default function Login() {
       const user = userCred.user;
 
       
-      const userDocRef = doc(db, "users", user.uid);
+      const userDocRef = doc(db, "coaches", user.uid);
       const userDataObj = await getDoc(userDocRef);
 
       if (userDataObj.exists()) {

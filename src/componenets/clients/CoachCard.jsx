@@ -1,9 +1,14 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { subscribeToCoach, unsubscribeFromCoach } from '../../Services/subscriptions'
 import { useAuth } from "../../firebase/AuthContext";
+import { db } from "../../firebase/config";
+import { doc, getDoc } from "firebase/firestore";
+import { SUBS_COLLECTION, subId } from "../../Models/subscriptions";
 
 export default function CoachCard({ coach, onView }) {
-  const { user } = useAuth()
+  const { user } = useAuth();
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   if (!coach) return null;
 
@@ -18,7 +23,44 @@ export default function CoachCard({ coach, onView }) {
     createdAt,
   } = coach;
 
-  // handle Firestore Timestamp or plain date/string
+  // check subscription status on mount / when user or coach changes
+  useEffect(() => {
+    const checkSub = async () => {
+      if (!user?.uid || !uid) return setLoading(false);
+      try {
+        const ref = doc(db, SUBS_COLLECTION, subId(uid, user.uid));
+        const snap = await getDoc(ref);
+        if (snap.exists() && snap.data().status === "active") {
+          setIsSubscribed(true);
+        } else {
+          setIsSubscribed(false);
+        }
+      } catch (err) {
+        console.error("Error checking subscription:", err);
+        setIsSubscribed(false);
+      }
+      setLoading(false);
+    };
+    checkSub();
+  }, [user?.uid, uid]);
+
+  // handle subscribe/unsubscribe
+  const toggleSubscription = async () => {
+    if (!user?.uid || !uid) return;
+    try {
+      if (isSubscribed) {
+        await unsubscribeFromCoach({ coachUid: uid, clientUid: user.uid });
+        setIsSubscribed(false);
+      } else {
+        await subscribeToCoach({ coachUid: uid, clientUid: user.uid });
+        setIsSubscribed(true);
+      }
+    } catch (err) {
+      console.error("Error toggling subscription:", err);
+    }
+  };
+
+  // format createdAt
   let created = "";
   try {
     const d =
@@ -85,12 +127,14 @@ export default function CoachCard({ coach, onView }) {
             >
               View
             </button>
-            <button
-              className="btn btn-sm btn-outline-secondary"
-              onClick={() => subscribeToCoach(coach.uid, user.uid)}
-            >
-              Subscribe
-            </button>
+            {!loading && (
+              <button
+                className={`btn btn-sm ${isSubscribed ? "btn-danger" : "btn-outline-secondary"}`}
+                onClick={toggleSubscription}
+              >
+                {isSubscribed ? "Unsubscribe" : "Subscribe"}
+              </button>
+            )}
           </div>
         </div>
       </div>

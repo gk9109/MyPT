@@ -7,6 +7,7 @@ export default function SearchBar({ setResults }) {
   const [query, setQuery] = useState("");
   const [coaches, setCoaches] = useState([]);
 
+  //once the page loads, fetch every coach from db
   useEffect(() => {
     (async () => {
       const snap = await getDocs(collection(db, "coaches"));

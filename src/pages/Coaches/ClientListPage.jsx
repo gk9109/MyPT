@@ -1,56 +1,46 @@
-// src/pages/coach/ClientsPage.jsx
 import { useEffect, useState } from "react";
 import { useAuth } from "../../firebase/AuthContext";
-import { coach_ClientList } from "../../Services/subscriptions";
-import ClientList from "../../componenets/coach/ClientList"
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "../../firebase/config";
+import ClientList from "../../componenets/coach/ClientList";
+import SearchBar from "../../componenets/coach/SearchBar";
 
 export default function ClientsPage() {
-  const { user } = useAuth();
-  const [clients, setClients] = useState([]);
-  const [query, setQuery] = useState("");
+  const [allClients, setAllClients] = useState([]);
+  const [visibleClients, setVisibleClients] = useState([]);
 
+  const { user } = useAuth();
+
+  // fetch data once on page load
+  // sets an alphabetically ordered listed of active subscription clients
   useEffect(() => {
-    if (!user?.uid) return;
-    (async () => {
-      const list = await coach_ClientList(user.uid);
-      setClients(list);
-    })();
+    const fetchSubs = async () => {
+      try {
+        const q = query(
+          collection(db, "subscriptions"),
+          where("coachUid", "==", user.uid),
+          where("status", "==", "active")
+        );
+        const snap = await getDocs(q);
+        const data = snap.docs.map(doc => ({ docId: doc.id, ...doc.data() }));
+        
+        // sort alphabetically by searchName once on load
+        const ordered = data.sort((a, b) =>
+          (a.searchName || "").localeCompare(b.searchName || "")
+        );
+        setAllClients(ordered);
+        setVisibleClients(ordered);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    if (user?.uid) fetchSubs();
   }, [user]);
 
-  const filtered = clients.filter(c =>
-    `${c.firstName || ""} ${c.lastName || ""}`
-      .toLowerCase()
-      .includes(query.toLowerCase())
-  );
-
   return (
-    <div className="container py-4">
-      <h2 className="mb-4">My Clients</h2>
-
-      {/* Search bar */}
-      <form
-        className="d-flex mb-4"
-        onSubmit={e => e.preventDefault()}
-        style={{ maxWidth: 400 }}
-      >
-        <input
-          type="search"
-          placeholder="Search a client..."
-          className="form-control me-2"
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-        />
-        <button className="btn btn-outline-primary" type="submit">
-          Search
-        </button>
-      </form>
-
-      {/* Clients list */}
-      {filtered.length > 0 ? (
-        <ClientList clients={filtered} />
-      ) : (
-        <div className="alert alert-info">No clients found.</div>
-      )}
-    </div>
+    <>
+      <SearchBar allClients={allClients}  setVisibleClients={setVisibleClients}/>
+      <ClientList clients={visibleClients} />
+    </>
   );
 }

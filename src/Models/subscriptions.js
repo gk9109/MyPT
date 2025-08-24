@@ -11,6 +11,7 @@
  * @property {import("firebase/firestore").Timestamp=} createdAt
  * @property {import("firebase/firestore").Timestamp=} updatedAt
  * @property {string=} createdBy
+ * @property {string=} serachName
  */
 
 // Name of the Firestore collection 

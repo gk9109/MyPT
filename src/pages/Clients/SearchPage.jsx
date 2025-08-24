@@ -7,8 +7,8 @@ export default function SearchPage() {
 
   return (
     <>
-        <SearchBar setResults={setResults}/>
-        <SearchResults results={results}/>
+      <SearchBar setResults={setResults}/>
+      <SearchResults results={results}/>
     </>
   )
 }
