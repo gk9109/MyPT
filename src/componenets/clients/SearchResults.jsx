@@ -2,11 +2,11 @@
 import CoachCard from "./CoachCard";
 import { subscribeToCoach } from "../../Services/subscriptions";
 
-export default function SearchResults({ results = [], clientUid, onView }) {
+export default function SearchResults({ results = [], clientUid }) {
   if (!results.length) return null;
 
   const onSubscribe = async (coach) => {
-    if (!clientUid) return; // optionally show a toast: "Please sign in"
+    if (!clientUid) return; 
     await subscribeToCoach({ coachUid: coach.uid, clientUid });
   };
 
@@ -17,6 +17,7 @@ export default function SearchResults({ results = [], clientUid, onView }) {
           <CoachCard
             coach={coach}
             onView={onView}
+            mode="search"
             onFavorite={() => onSubscribe(coach)}
           />
         </div>

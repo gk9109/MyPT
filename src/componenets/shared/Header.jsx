@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../firebase/AuthContext';
 import SearchBar from '../clients/SearchBar'; // adjust path if needed
 
-export default function Header() {
+export default function Header({ toggleSidebar }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -15,8 +15,12 @@ export default function Header() {
   return (
     <header className="bg-light border-bottom">
       <nav className="container d-flex justify-content-between align-items-center py-3">
+        <button className="btn btn-outline-primary btn-sm" onClick={toggleSidebar}>
+          ☰ Menu
+        </button>
         <h4 className="m-0 text-primary">MyPT</h4>
 
+        
         {/* Show search bar only for logged-in clients */}
         {/* {user?.role === "client" && <SearchBar />} */}
 

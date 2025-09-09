@@ -1,7 +1,18 @@
-import React from "react";
+import React, { useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../firebase/AuthContext";
 
-export default function ClientCard({ client, onSelect }) {
-  if (!client) return null;
+export default function ClientCard({ client }) {
+  const navigate = useNavigate();
+  const { setSelectedClient } = useAuth(); 
+
+  if (!client) return "no clients";
+
+  const onSelect = () => {
+    // adding selected client to global context for easy access
+    setSelectedClient(client);
+    navigate("/client-profile");
+  }
 
   const {
     searchName,
@@ -80,7 +91,7 @@ export default function ClientCard({ client, onSelect }) {
         <div className="d-flex justify-content-end">
           <button
             className="btn btn-sm btn-primary"
-            onClick={() => onSelect?.(client)}
+            onClick={() => onSelect()}
           >
             Select
           </button>

@@ -19,22 +19,23 @@ export default function Sidebar() {
   
   // menu items that every logged in user should see
   const COMMON = [
-    { to: "/profile", label: "Profile", icon: "bi-person" },
+    { to: "/profile", label: "Profile" }
   ];
 
   // menu items only clients should see 
   const CLIENT = [
-    { to: "/search",   label: "Search",       icon: "bi-search" },
-    { to: "/diet",     label: "Diet Plan",    icon: "bi-egg" },
-    { to: "/workout",  label: "Workout Plan", icon: "bi-heart-pulse" },
-    { to: "/progress", label: "Progress",     icon: "bi-bar-chart-line" },
+    { to: "/search",   label: "Search" },
+    { to: "/coach-list",   label: "Coach List" },
+    { to: "/diet",     label: "Nutrition Plan" },
+    { to: "/workout",  label: "Workout Plan" },
+    { to: "/progress", label: "Progress" }
   ];
 
   // menu items only coaches should see
   const COACH = [
-    { to: "/clients",          label: "Clients",        icon: "bi-people" },
-    { to: "/nutrition",        label: "Nutrition",      icon: "bi-clipboard-heart" },
-    { to: "/workout",          label: "workout",        icon: "bi-clipboard-heart" },
+    { to: "/clients",          label: "Clients" },
+    { to: "/nutrition",        label: "Nutrition" },
+    { to: "/workout",          label: "Workout" }
   ];
 
   // sum of items each role should see
@@ -42,16 +43,16 @@ export default function Sidebar() {
   const items = role === "coach" ? [...COMMON, ...COACH] : [...COMMON, ...CLIENT];
 
   return (
-    <div className="bg-white border-end vh-100 p-3 shadow-sm" style={{ width: 220 }}>
+    <div className="bg-white border-end h-100 p-3 shadow-sm" style={{ width: 220 }}>
       <h5 className="text-primary mb-4">Navigation</h5>
       <ul className="nav flex-column gap-2">
-        {items.map(({ to, label, icon }) => (
+        {items.map(({ to, label }) => (
           <li key={to} className="nav-item">
             <Link
               to={to}
               className={`nav-link fw-semibold ${pathname === to ? "active text-primary" : "text-dark"}`}
             >
-              <i className={`bi ${icon} me-2`} /> {label}
+              <i className={`bi me-2`} /> {label}
             </Link>
           </li>
         ))}

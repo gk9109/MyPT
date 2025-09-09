@@ -5,10 +5,15 @@ import { db } from "../../firebase/config";
 import { doc, getDoc } from "firebase/firestore";
 import { SUBS_COLLECTION, subId } from "../../Models/subscriptions";
 
-export default function CoachCard({ coach, onView }) {
-  const { user } = useAuth();
+export default function CoachCard({ coach, onView, mode }) {
+  const { user, setSelectedCoach } = useAuth();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const onSelect = () => {
+    setSelectedCoach(coach);
+    console.log(coach);
+  }
 
   if (!coach) return null;
 
@@ -45,20 +50,24 @@ export default function CoachCard({ coach, onView }) {
   }, [user?.uid, uid]);
 
   // handle subscribe/unsubscribe
+  // inside CoachCard
   const toggleSubscription = async () => {
     if (!user?.uid || !uid) return;
     try {
       if (isSubscribed) {
         await unsubscribeFromCoach({ coachUid: uid, clientUid: user.uid });
         setIsSubscribed(false);
+        setSelectedCoach(null);   // clear context if unsubscribed
       } else {
         await subscribeToCoach({ coachUid: uid, clientUid: user.uid });
         setIsSubscribed(true);
+        setSelectedCoach(coach);  // store full coach object in context
       }
     } catch (err) {
       console.error("Error toggling subscription:", err);
     }
   };
+
 
   // format createdAt
   let created = "";
@@ -72,14 +81,16 @@ export default function CoachCard({ coach, onView }) {
         ? new Date(createdAt)
         : null;
     created = d ? d.toLocaleDateString() : "";
-  } catch (_) {}
+  } catch (error) {
+    console.log(error);
+  }
 
   const name = `${firstName} ${lastName}`.trim() || "(Unnamed)";
-  const initials =
-    (firstName?.[0] || "").toUpperCase() + (lastName?.[0] || "").toUpperCase();
+  const initials = (firstName?.[0] || "").toUpperCase() + (lastName?.[0] || "").toUpperCase();
 
   return (
     <div className="card shadow-sm h-100">
+      <div className="card-header">
       <div className="card-body d-flex">
         {/* Avatar */}
         <div
@@ -108,11 +119,7 @@ export default function CoachCard({ coach, onView }) {
                 <i className="bi bi-telephone me-1" /> {phone}
               </div>
             )}
-            {uid && (
-              <div className="small text-muted">
-                <i className="bi bi-hash me-1" /> {uid}
-              </div>
-            )}
+            
             {created && (
               <div className="small text-muted">
                 <i className="bi bi-calendar me-1" /> Joined {created}
@@ -121,13 +128,7 @@ export default function CoachCard({ coach, onView }) {
           </div>
 
           <div className="mt-3 d-flex gap-2">
-            <button
-              className="btn btn-sm btn-primary"
-              onClick={() => onView?.(coach)}
-            >
-              View
-            </button>
-            {!loading && (
+            {mode === "search" && !loading && (
               <button
                 className={`btn btn-sm ${isSubscribed ? "btn-danger" : "btn-outline-secondary"}`}
                 onClick={toggleSubscription}
@@ -135,8 +136,19 @@ export default function CoachCard({ coach, onView }) {
                 {isSubscribed ? "Unsubscribe" : "Subscribe"}
               </button>
             )}
+
+            {mode === "subscribed" && (
+              <button
+                className="btn btn-sm btn-primary"
+                onClick={() => onSelect()}
+              >
+                Select
+              </button>
+            )}
           </div>
+
         </div>
+      </div>
       </div>
     </div>
   );

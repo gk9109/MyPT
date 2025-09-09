@@ -12,7 +12,15 @@ import { auth, db } from "../firebase/config";
 
 
 //this creates aglobal var (AuthContext) that can contain user objexts, loading bools, and logout functions
-const AuthContext = createContext({ user: null, loading: true, logout: async () => {} });
+const AuthContext = createContext({
+  user: null,
+  loading: true,
+  logout: async () => {},
+  selectedClient: null,
+  setSelectedClient: () => {}
+});
+
+
 
 // Check Firestore profile and return role + profile data
 async function resolveProfileAndRole(uid) {
@@ -41,13 +49,16 @@ export function AuthProvider({ children }) {
   // Local state for the current user and a loading flag
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  // these are passed to "/componenets/coach/clentCard" and "/pages/coaches/coacheSideClientProfile"
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [selectedCoach, setSelectedCoach] = useState(null);
 
   // Run once when the component mounts
   useEffect(() => {
     // onAuthStateChanged -> Subscribe to Firebase Auth changes (login/logout)
     // auth from config.js
-    const unsub = onAuthStateChanged(auth, async (fbUser) => {
-      if (!fbUser) {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
         // Case 1: no user is logged in
         setUser(null);
         setLoading(false);
@@ -56,19 +67,19 @@ export function AuthProvider({ children }) {
 
       try {
         // Case 2: user is logged in → resolve role/profile from Firestore
-        const { role, profile } = await resolveProfileAndRole(fbUser.uid);
+        const { role, profile } = await resolveProfileAndRole(user.uid);
 
         // Merge Firebase Auth data + Firestore profile into one object
         setUser({
-          uid: fbUser.uid,     // always the Auth uid
-          email: fbUser.email, // email from Auth
+          uid: user.uid,     // always the Auth uid
+          email: user.email, // email from Auth
           role,                // "coach" | "client" | "admin" | null
           ...profile,          // any extra fields from Firestore
         });
       } catch (e) {
         console.error("AuthContext resolve error:", e);
         // fallback user if Firestore lookup failed
-        setUser({ uid: fbUser.uid, email: fbUser.email, role: null });
+        setUser({ uid: user.uid, email: user.email, role: null });
       } finally {
         // Auth check finished
         setLoading(false);
@@ -85,7 +96,19 @@ export function AuthProvider({ children }) {
   // Provide user, loading, and logout to the rest of the app
   // this wrapper takes place in main.jsx
   return (
-    <AuthContext.Provider value={{ user, loading, logout }}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      logout,
+      selectedClient,
+      setSelectedClient: (client) => {
+        // copying the object and setting uid to the first value out of thsese to normalize the use
+        const normalized = { ...client, uid: client.uid || client.clientUid };
+        setSelectedClient(normalized);
+      },
+      selectedCoach,
+      setSelectedCoach
+      }}>
       {children}
     </AuthContext.Provider>
   );

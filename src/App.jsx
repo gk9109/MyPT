@@ -6,11 +6,13 @@ import Profile from './pages/Profile';
 import Layout from './componenets/shared/Layout';
 import ProtectedRoute from './componenets/shared/ProtectedRoute';
 import TraineeNutritionPage from './pages/liad/TraineeNutritionPage';
-import NutritionForm from './pages/liad/NutritionForm'
+import NutritionPlan from './pages/Coaches/NutritionPlan'
 import SearchPage from './pages/Clients/SearchPage';
 import GuestRoute from './componenets/shared/GuestRoute';
-import WorkoutPlan from './pages/liad/WorkoutPlan';
+import WorkoutPlan from './pages/Coaches/WorkoutPlan';
 import ClientListPage from './pages/Coaches/ClientListPage';
+import CoachSideClientProfile from './pages/Coaches/CoachSideClientProfile';
+import CoachListPage from './pages/Clients/CoachListPage';
 
 
 
@@ -37,9 +39,10 @@ function App() {
 
           {/* coaches only */}
           <Route element={<ProtectedRoute allow={"coach"} />}>
-            <Route path="/nutrition" element={<NutritionForm />} /> 
+            <Route path="/nutrition" element={<NutritionPlan />} /> 
             <Route path="/workout" element={<WorkoutPlan />} />
             <Route path="/clients" element={<ClientListPage />} />
+            <Route path="/client-profile" element={<CoachSideClientProfile />} />
 
           </Route>
 
@@ -47,6 +50,7 @@ function App() {
           <Route element={<ProtectedRoute allow={"client"} />}>
             <Route path="/diet" element={<TraineeNutritionPage />} />
             <Route path='/search' element={<SearchPage/>} />
+            <Route path='/coach-list' element={<CoachListPage/>} />
           </Route>
                  
         </Routes>

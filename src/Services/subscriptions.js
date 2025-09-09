@@ -1,6 +1,27 @@
 import { db } from "../firebase/config";
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "firebase/firestore";
 import { SUBS_COLLECTION, subId } from "../Models/subscriptions";
+import { useAuth } from "../firebase/AuthContext";
+import { data } from "react-router-dom";
+
+// export async function getCoachByUid(coachUid) {
+//   try {
+//     const q = query(
+//       collection(db, "coaches"),
+//       where("uid", "==", coachUid)   // match field name in your coaches docs
+//     );
+
+//     const snap = await getDocs(q);
+//     if (snap.empty) return null;
+
+//     // get the first matching doc
+//     const doc = snap.docs[0];
+//     return { docId: doc.id, ...doc.data() };
+//   } catch (error) {
+//     console.error("Error fetching coach:", error);
+//     return null;
+//   }
+// }
 
 // this file contain subscription related functions.
 // subscription between a client and a coach works by creating a documen with a unique id.
@@ -91,15 +112,40 @@ export async function coach_ClientList(coachUid) {
 
 // for a client. Returns an array of that client’s coach UIDs.
 export async function client_CoachList(clientUid) {
-  // setting a query for searching in collection
-  const q = query(
-    collection(db, SUBS_COLLECTION),
-    where("clientUid", "==", clientUid),
-    where("status", "==", "active")
-  );
+  try {
+    const q = query(
+      collection(db, SUBS_COLLECTION),
+      where("clientUid", "==", clientUid),
+      where("status", "==", "active")
+    );
 
-  // array of matching docs
-  const snap = await getDocs(q);
-  // return an array of obejects containing doc id's and data objects
-  return snap.docs.map(d => ({ ...d.data(), docId: d.id }));
+    // getting subscription docs for coach uid
+    const snap = await getDocs(q);
+
+    // instead of keeping subs, fetch each coach directly
+    // promise.all -> lets you run many async tasks in parallel (one per sub).
+    const coaches = await Promise.all(
+      snap.docs.map(async (subDoc) => {
+
+        const { coachUid } = subDoc.data();          // extract coach id
+        const coachRef = doc(db, "coaches", coachUid);
+        const coachSnap = await getDoc(coachRef);
+        // pure coach object
+        return coachSnap.exists() ? { docId: coachSnap.id, ...coachSnap.data() } : null;
+      })
+    );
+
+    // filter out nulls if any coach doc was missing
+    return coaches.filter(Boolean);
+  } catch (err) {
+    console.error("Error fetching client coaches:", err);
+    return [];
+  }
+}
+
+
+export function getClient(clients = [], clientUid){
+  const selectedClient = clients.find(c => c.clientUid === clientUid) || null; 
+  return selectedClient;
+  
 }

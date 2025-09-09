@@ -11,7 +11,7 @@ export default function SearchBar({ setResults }) {
   useEffect(() => {
     (async () => {
       const snap = await getDocs(collection(db, "coaches"));
-      setCoaches(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      setCoaches(snap.docs.map(d => ({ docId: d.id, ...d.data() })));
     })();
   }, []);
 
