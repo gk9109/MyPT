@@ -4,60 +4,28 @@ import { SUBS_COLLECTION, subId } from "../Models/subscriptions";
 import { useAuth } from "../firebase/AuthContext";
 import { data } from "react-router-dom";
 
-// export async function getCoachByUid(coachUid) {
-//   try {
-//     const q = query(
-//       collection(db, "coaches"),
-//       where("uid", "==", coachUid)   // match field name in your coaches docs
-//     );
 
-//     const snap = await getDocs(q);
-//     if (snap.empty) return null;
-
-//     // get the first matching doc
-//     const doc = snap.docs[0];
-//     return { docId: doc.id, ...doc.data() };
-//   } catch (error) {
-//     console.error("Error fetching coach:", error);
-//     return null;
-//   }
-// }
-
-// this file contain subscription related functions.
-// subscription between a client and a coach works by creating a documen with a unique id.
-// this id is a product of the coach's and cliet's id's unified.
-
-// Create doc ref with coach and user id and set status to "active" activate
-// Create doc ref with coach and user id and set status to "active" activate
 export async function subscribeToCoach({ coachUid, clientUid }) {
   let searchName = "";
 
   try {
-    // The subId is a unique identifier for the document in the "subscriptions" collection.
-    // It's created by combining the coachId and clientId,
-    // which ensures that each subscription document is uniquely identifiable based on the specific
-    // coach-client pairing.
     const ref = doc(db, SUBS_COLLECTION, subId(coachUid, clientUid));
-
-    // doing this before setting doc preserves createdAt when reactivating the same pair.
-    // if the doc exists we keep its original createdAt and only bump updatedAt.
     const snap = await getDoc(ref);
 
+    // safely get client data if exists
     try {
-      // get the client doc from "clients" collection by clientUid
       const clientRef = doc(db, "clients", clientUid);
       const clientSnap = await getDoc(clientRef);
+      const data = clientSnap.data();
 
-      // build or use stored searchName from client
-      searchName = clientSnap.data().searchName
-        .trim()
-        .replace(/\s+/g, " ")
-        .toLowerCase();
+      if (data && typeof data.searchName === "string") {
+        searchName = data.searchName.trim().replace(/\s+/g, " ").toLowerCase();
+      }
     } catch (error) {
-      console.log(error);
+      console.log("Error fetching client data:", error);
     }
 
-    // setting doc with data
+    // actually create/update the subscription doc
     await setDoc(
       ref,
       {
@@ -68,16 +36,16 @@ export async function subscribeToCoach({ coachUid, clientUid }) {
         updatedAt: serverTimestamp(),
         createdBy: clientUid,
         searchName,
-        // merge: true → updates only the fields you pass, leaving others untouched.
-        // no merge → replaces the whole document.
       },
       { merge: true }
     );
-    console.log("subscription created successfully");
+
+    console.log("✅ Subscription created successfully");
   } catch (error) {
-    console.log(error);
+    console.log("❌ Error subscribing:", error);
   }
 }
+
 
 
 // cancel subscription (soft delete)

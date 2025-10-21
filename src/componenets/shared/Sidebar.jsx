@@ -26,16 +26,16 @@ export default function Sidebar() {
   const CLIENT = [
     { to: "/search",   label: "Search" },
     { to: "/coach-list",   label: "Coach List" },
-    { to: "/diet",     label: "Nutrition Plan" },
-    { to: "/workout",  label: "Workout Plan" },
+    // { to: "/diet",     label: "Nutrition Plan" },
+    // { to: "/workout",  label: "Workout Plan" },
     { to: "/progress", label: "Progress" }
   ];
 
   // menu items only coaches should see
   const COACH = [
     { to: "/clients",          label: "Clients" },
-    { to: "/nutrition",        label: "Nutrition" },
-    { to: "/workout",          label: "Workout" }
+    { to: "/videos",          label: "Videos" },
+    { to: "/schedule",          label: "Schedule" },
   ];
 
   // sum of items each role should see

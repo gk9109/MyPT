@@ -5,6 +5,9 @@ import { db } from "../../firebase/config";
 import ClientList from "../../componenets/coach/ClientList";
 import SearchBar from "../../componenets/coach/SearchBar";
 
+// this page displays a search bar componenet and the list of results below
+// currently showing a coach all active subscriptions -> clients,
+// and lets you filter from that list using the search bar
 export default function ClientsPage() {
   const [allClients, setAllClients] = useState([]);
   const [visibleClients, setVisibleClients] = useState([]);

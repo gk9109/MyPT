@@ -8,6 +8,9 @@ import { useAuth } from "../../firebase/AuthContext";
 
 export default function ProtectedRoute({ allow, children }) {
   const { user, loading } = useAuth();
+  // The useLocation hook in React is part of the react-router-dom library and provides
+  // access to the current location object.
+  // This object represents the current URL and contains various properties related to it.
   const loc = useLocation();
 
   // Don’t render until Firebase finishes checking auth state
@@ -20,9 +23,15 @@ export default function ProtectedRoute({ allow, children }) {
 
   // If a role is required -> check it
   const role = user.role?.toLowerCase();
+  console.log("ProtectedRoute role:", role, "allow:", allow);
   if (allow && role !== allow.toLowerCase()) {
-    return <Navigate to="/profile" replace />;
-  }
+  // redirect admins (or anyone else) to their default dashboard
+  if (role === "admin") return <Navigate to="/admin/dashboard" replace />;
+  if (role === "coach") return <Navigate to="/profile" replace />;
+  if (role === "client") return <Navigate to="/profile" replace />;
+}
+
+
 
   // Render nested routes (<Outlet/>) or direct children
   return children ?? <Outlet />;

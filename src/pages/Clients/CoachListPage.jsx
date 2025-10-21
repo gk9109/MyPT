@@ -9,7 +9,7 @@ export default function CoachListPage() {
 
   useEffect(() => {
     const fetchCoaches = async () => {
-      if (!user?.uid) return
+      if (!user) return
       try {
         // Fetch all active coaches for this client (from subscriptions collection)
         const coaches = await client_CoachList(user.uid)
@@ -29,16 +29,15 @@ export default function CoachListPage() {
   }, [user])
 
   return (
-    //d-flex flex-column align-items-center gap-3
-    <div className="d-flex justify-content-center ">
+    <div className="d-flex flex-column align-items-center gap-3">
       {/* If no coaches are found, display a fallback message */}
       {allCoaches.length === 0 ? (
         <p>No coaches found.</p>
       ) : (
         // Otherwise, render a grid of CoachCards
         allCoaches.map(coach => (
-          <div key={coach.docId || coach.uid} className="col-md-12">
-            <CoachCard coach={coach} mode="subscribed" />
+          <div key={coach.uid} className="col-md-12">
+            <CoachCard coach={coach} />
           </div>
         ))
       )}

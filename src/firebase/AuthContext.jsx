@@ -36,9 +36,16 @@ async function resolveProfileAndRole(uid) {
     return { role: "client", profile: clientSnap.data() };
   }
 
-  // 3. Not found
+  // 3. Look in admins
+  const adminSnap = await getDoc(doc(db, "admins", uid));
+  if (adminSnap.exists()) {
+    return { role: "admin", profile: adminSnap.data() };
+  }
+
+  // 4. Not found
   return { role: null, profile: {} };
 }
+
 
 //Listens for login/logout with onAuthStateChanged.
 //Resolves role + profile from Firestore.

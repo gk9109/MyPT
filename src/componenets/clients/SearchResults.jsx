@@ -13,10 +13,9 @@ export default function SearchResults({ results = [], clientUid }) {
   return (
     <div className="d-flex flex-column align-items-center">
       {results.map((coach) => (
-        <div key={coach.uid || coach.id} className="w-100 mb-3" style={{ maxWidth: 520 }}>
+        <div key={coach.docId || coach.uid} className="w-100 mb-3" style={{ maxWidth: 520 }}>
           <CoachCard
             coach={coach}
-            onView={onView}
             mode="search"
             onFavorite={() => onSubscribe(coach)}
           />

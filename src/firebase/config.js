@@ -2,6 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { getStorage } from "firebase/storage"; 
 
 // ** Initializes Firebase once and exports auth and db
 // so the rest of the app can talk to Firebase Auth + Firestore.
@@ -16,7 +17,7 @@ const firebaseConfig = {
   //ID of your Firebase project — used across all Firebase services.
   projectId: "mypt-53389",
   //Used for file uploads/downloads via Firebase Storage.
-  storageBucket: "mypt-53389.appspot.com",
+  storageBucket: "mypt-53389.firebasestorage.app",
   //Required for Firebase Cloud Messaging (push notifications).
   messagingSenderId: "429035927757",
   //Uniquely identifies your app — used internally by Firebase.
@@ -36,4 +37,9 @@ export const db = getFirestore(app);
 // Use this `auth` object for creating accounts, signing in/out, and listening
 // to login state changes (onAuthStateChanged).
 export const auth = getAuth(app);
+
+// Storage instance: your entry point to Firebase Storage service.
+// Use this `storage` object to upload and download files (videos, images, etc.)
+// from Firebase Storage. It connects the app to your project's storage bucket.
+export const storage = getStorage(app);
 

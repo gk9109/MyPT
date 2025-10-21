@@ -1,61 +1,64 @@
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "../../firebase//config";
+import { auth, db } from "../../firebase/config";
 import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "../../firebase/AuthContext";
 
 export default function Login() {
   const { user } = useAuth();
-  // refs to get user info
   const emailRef = useRef();
   const passwordRef = useRef();
-  //states for signing in and error
   const [error, setError] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
-
-  //nav initalization
   const navigate = useNavigate();
 
-  //handles form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    //user info
     const email = emailRef.current.value;
     const password = passwordRef.current.value;
 
-    //error handling
     if (!email || !password) {
       setError("Please enter both email and password.");
       return;
     }
 
     try {
-      //after user enters info -> set signing in -> true
       setIsSigningIn(true);
-      //getting user credentials
       const userCred = await signInWithEmailAndPassword(auth, email, password);
-      //extracting user
       const user = userCred.user;
 
-      
-      const userDocRef = doc(db, "coaches", user.uid);
-      const userDataObj = await getDoc(userDocRef);
-
-      if (userDataObj.exists()) {
-        //navigates to users profile
-        navigate("/profile");
-      } else {
-        const subClientDocRef = doc(db, "clients", user.uid);
-        const clientUserDataObj = await getDoc(subClientDocRef);
-        if (clientUserDataObj.exists()) {
-          navigate("/profile", { state: { user: clientUserDataObj.data() } });
-        } else {
-          setError("User data not found.");
-        }
+      // Check if user is a coach
+      const coachDocRef = doc(db, "coaches", user.uid);
+      const coachDoc = await getDoc(coachDocRef);
+      if (coachDoc.exists()) {
+        navigate("/profile", { state: { user: coachDoc.data() } });
+        return;
       }
+
+      // Check if user is a client
+      const clientDocRef = doc(db, "clients", user.uid);
+      const clientDoc = await getDoc(clientDocRef);
+      if (clientDoc.exists()) {
+        navigate("/profile", { state: { user: clientDoc.data() } });
+        return;
+      }
+
+      // Check if user is an admin (fixed collection name)
+      console.log("Checking admin:", user.uid);
+      const adminDocRef = doc(db, "admins", user.uid);
+      const adminDoc = await getDoc(adminDocRef);
+      console.log("Admin doc exists:", adminDoc.exists());
+      if (adminDoc.exists()) {
+        navigate("/admin/dashboard"); // go to admin dashboard page
+        return;
+      }
+
+      // ❌ No match found
+      setError("User data not found in any collection.");
+
     } catch (err) {
       console.error(err);
       setError("Login failed: " + err.message);
@@ -71,7 +74,6 @@ export default function Login() {
           <div className="card shadow">
             <div className="card-body p-4">
               <h3 className="text-center mb-4">Login to Your Account</h3>
-
               {error && <div className="alert alert-danger">{error}</div>}
 
               <form onSubmit={handleSubmit}>
@@ -107,7 +109,7 @@ export default function Login() {
 
                 <div className="text-center mt-3">
                   <a href="#" className="text-muted">
-                    Forgot password?
+                    Forgot password? ADD THIS PART
                   </a>
                 </div>
               </form>

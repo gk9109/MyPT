@@ -25,6 +25,7 @@ export default function WorkoutPlanForm({ initialTitle = "", initialExercises = 
 
   return (
     <div className="border border-dark-subtle p-3 card shadow">
+      <label className="form-label">Workout Title</label>
       <input
         type="text"
         placeholder="Workout Title"
@@ -38,6 +39,7 @@ export default function WorkoutPlanForm({ initialTitle = "", initialExercises = 
           <div key={index} className="card mb-3 p-3 shadow-sm">
             <div className="row g-2">
               <div className="col-md-3">
+                <label className="form-label">Exercise Name</label>
                 <input
                   type="text"
                   className="form-control"
@@ -47,6 +49,7 @@ export default function WorkoutPlanForm({ initialTitle = "", initialExercises = 
                 />
               </div>
               <div className="col-md-2">
+                <label className="form-label">Sets</label>
                 <input
                   type="text"
                   className="form-control"
@@ -56,6 +59,7 @@ export default function WorkoutPlanForm({ initialTitle = "", initialExercises = 
                 />
               </div>
               <div className="col-md-2">
+                <label className="form-label">Reps</label>
                 <input
                   type="text"
                   className="form-control"
@@ -65,6 +69,7 @@ export default function WorkoutPlanForm({ initialTitle = "", initialExercises = 
                 />
               </div>
               <div className="col-md-5">
+                <label className="form-label">Notes</label>
                 <input
                   type="text"
                   className="form-control"

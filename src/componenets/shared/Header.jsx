@@ -15,9 +15,11 @@ export default function Header({ toggleSidebar }) {
   return (
     <header className="bg-light border-bottom">
       <nav className="container d-flex justify-content-between align-items-center py-3">
-        <button className="btn btn-outline-primary btn-sm" onClick={toggleSidebar}>
-          ☰ Menu
-        </button>
+        {user && (
+          <button className="btn btn-outline-primary btn-sm" onClick={toggleSidebar}>
+            ☰ Menu
+          </button>
+        )}
         <h4 className="m-0 text-primary">MyPT</h4>
 
         

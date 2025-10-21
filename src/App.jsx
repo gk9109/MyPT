@@ -11,9 +11,15 @@ import SearchPage from './pages/Clients/SearchPage';
 import GuestRoute from './componenets/shared/GuestRoute';
 import WorkoutPlan from './pages/Coaches/WorkoutPlan';
 import ClientListPage from './pages/Coaches/ClientListPage';
-import CoachSideClientProfile from './pages/Coaches/CoachSideClientProfile';
+import ClientSetUp from './pages/Coaches/ClientSetUp';
 import CoachListPage from './pages/Clients/CoachListPage';
-
+import ChatPage from './pages/Shared/ChatPage';
+import CoachSetUp from './pages/Clients/MyPlans';
+import UploadVideosPage from './pages/Coaches/UploadVideosPage';
+import AdminDashboard from './pages/admin/AdminDashboard'
+import Reports from './pages/admin/Reports'
+import UserList from './pages/admin/UserList'
+import SchedulePage from './pages/Coaches/SchedulePage';
 
 
 
@@ -34,23 +40,39 @@ function App() {
           
           {/* any logged in user */}
           <Route element={<ProtectedRoute />}>
-            <Route path='/profile' element={<Profile />} />
+            
+
+            {/* The colon : means this part is a parameter */}
+            <Route path="/chat/:subscriptionId" element={<ChatPage />} />
           </Route>
 
           {/* coaches only */}
-          <Route element={<ProtectedRoute allow={"coach"} />}>
+          <Route element={<ProtectedRoute allow="coach" />}>
             <Route path="/nutrition" element={<NutritionPlan />} /> 
             <Route path="/workout" element={<WorkoutPlan />} />
             <Route path="/clients" element={<ClientListPage />} />
-            <Route path="/client-profile" element={<CoachSideClientProfile />} />
+            <Route path="/client-profile" element={<ClientSetUp />} />
+            <Route path="/videos" element={<UploadVideosPage />} /> 
+            <Route path='/profile' element={<Profile />} />
+            <Route path='/schedule' element={<SchedulePage />} />
 
           </Route>
 
           {/* clients only */}
-          <Route element={<ProtectedRoute allow={"client"} />}>
+          <Route element={<ProtectedRoute allow="client" />}>
             <Route path="/diet" element={<TraineeNutritionPage />} />
             <Route path='/search' element={<SearchPage/>} />
             <Route path='/coach-list' element={<CoachListPage/>} />
+            <Route path='/plans' element={<CoachSetUp/>} />
+            <Route path='/profile' element={<Profile />} />
+          </Route>
+
+          {/* admin only */}
+          <Route element={<ProtectedRoute allow="admin" />}>
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/reports" element={<Reports />} />
+            <Route path="/admin/users" element={<UserList />} />
+            <Route path='/profile' element={<Profile />} />
           </Route>
                  
         </Routes>

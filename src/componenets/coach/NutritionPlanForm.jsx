@@ -1,11 +1,12 @@
 import { useState } from "react";
 
 export default function NutritionPlanForm({ initialMeals = [], onSave }) {
-  const [meals, setMeals] = useState(
-    initialMeals.length > 0 ? initialMeals : [
-      { name: "", carbs: "", fats: "", proteins: "", totalCalories: "" }
-    ]
-  );
+  const [meals, setMeals] = useState([
+  { title: "Breakfast", carbs: "", fats: "", protein: "", calories: "" },
+  { title: "Lunch", carbs: "", fats: "", protein: "", calories: "" },
+  { title: "Dinner", carbs: "", fats: "", protein: "", calories: "" },
+]);
+
 
   const handleMealChange = (index, field, value) => {
     const updated = [...meals];
@@ -14,8 +15,9 @@ export default function NutritionPlanForm({ initialMeals = [], onSave }) {
   };
 
   const handleAddMeal = () => {
-    setMeals([...meals, { name: "", carbs: "", fats: "", proteins: "", totalCalories: "" }]);
+    setMeals([...meals, { title: "", carbs: "", fats: "", protein: "", calories: "" }]);
   };
+
 
   const handleSubmit = (e) => {
     e.preventDefault();

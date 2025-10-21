@@ -4,15 +4,27 @@ import { useAuth } from "../../firebase/AuthContext";
 
 export default function ClientCard({ client }) {
   const navigate = useNavigate();
-  const { setSelectedClient } = useAuth(); 
+  const { setSelectedClient, user } = useAuth(); 
 
   if (!client) return "no clients";
 
   const onSelect = () => {
     // adding selected client to global context for easy access
     setSelectedClient(client);
+    // storing client in local storage to avoid refresh issues
+    localStorage.setItem("selectedClient", JSON.stringify(client));
     navigate("/client-profile");
   }
+
+  const onChat = () => {
+    // adding selected client to global context for easy access
+    setSelectedClient(client);
+    // storing client in local storage to avoid refresh issues
+    localStorage.setItem("selectedClient", JSON.stringify(client));
+    // subscription ID pattern: coachUid_clientUid
+    const subscriptionId = `${user.uid}_${clientUid}`;
+    navigate(`/chat/${subscriptionId}`);
+  };
 
   const {
     searchName,
@@ -90,7 +102,13 @@ export default function ClientCard({ client }) {
         {/* Actions */}
         <div className="d-flex justify-content-end">
           <button
-            className="btn btn-sm btn-primary"
+          className="btn btn-sm btn-primary"
+          onClick={() => onChat()}
+          >
+            Chat
+          </button>
+          <button
+            className="btn btn-sm btn-primary ms-2"
             onClick={() => onSelect()}
           >
             Select

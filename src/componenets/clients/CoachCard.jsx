@@ -4,18 +4,28 @@ import { useAuth } from "../../firebase/AuthContext";
 import { db } from "../../firebase/config";
 import { doc, getDoc } from "firebase/firestore";
 import { SUBS_COLLECTION, subId } from "../../Models/subscriptions";
+import { useNavigate } from "react-router-dom";
 
-export default function CoachCard({ coach, onView, mode }) {
+export default function CoachCard({ coach, mode }) {
   const { user, setSelectedCoach } = useAuth();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   const onSelect = () => {
     setSelectedCoach(coach);
-    console.log(coach);
-  }
+    localStorage.setItem("selectedCoach", JSON.stringify(coach)); // persist coach
+    navigate("/plans")
+  };
 
-  if (!coach) return null;
+  const onChat = () => {
+    setSelectedCoach(coach);
+    localStorage.setItem("selectedCoach", JSON.stringify(coach)); // persist coach
+    const subscriptionId = `${coach.uid || coach.coachUid}_${user.uid}`;
+    navigate(`/chat/${subscriptionId}`);
+  };
+
+  if (!coach) return <p>no coaches in list</p>;
 
   const {
     firstName = "",
@@ -53,6 +63,8 @@ export default function CoachCard({ coach, onView, mode }) {
   // inside CoachCard
   const toggleSubscription = async () => {
     if (!user?.uid || !uid) return;
+    console.log("coachUid:", uid, "clientUid:", user?.uid, "user:", user);
+
     try {
       if (isSubscribed) {
         await unsubscribeFromCoach({ coachUid: uid, clientUid: user.uid });
@@ -67,7 +79,6 @@ export default function CoachCard({ coach, onView, mode }) {
       console.error("Error toggling subscription:", err);
     }
   };
-
 
   // format createdAt
   let created = "";
@@ -128,23 +139,24 @@ export default function CoachCard({ coach, onView, mode }) {
           </div>
 
           <div className="mt-3 d-flex gap-2">
-            {mode === "search" && !loading && (
+           
               <button
                 className={`btn btn-sm ${isSubscribed ? "btn-danger" : "btn-outline-secondary"}`}
                 onClick={toggleSubscription}
               >
                 {isSubscribed ? "Unsubscribe" : "Subscribe"}
               </button>
-            )}
+         
 
-            {mode === "subscribed" && (
-              <button
-                className="btn btn-sm btn-primary"
-                onClick={() => onSelect()}
-              >
+            
+              <button className="btn btn-sm btn-primary" onClick={() => onSelect()}>
                 Select
               </button>
-            )}
+              
+              <button className="btn btn-sm btn-primary" onClick={() => onChat()}>
+                Chat
+              </button>
+           
           </div>
 
         </div>
