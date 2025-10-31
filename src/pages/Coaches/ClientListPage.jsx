@@ -4,6 +4,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../firebase/config";
 import ClientList from "../../componenets/coach/ClientList";
 import SearchBar from "../../componenets/coach/SearchBar";
+import  Loader from '../../componenets/shared/Loader'
 
 // this page displays a search bar componenet and the list of results below
 // currently showing a coach all active subscriptions -> clients,
@@ -11,8 +12,11 @@ import SearchBar from "../../componenets/coach/SearchBar";
 export default function ClientsPage() {
   const [allClients, setAllClients] = useState([]);
   const [visibleClients, setVisibleClients] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const { user } = useAuth();
+
+  
 
   // fetch data once on page load
   // sets an alphabetically ordered listed of active subscription clients
@@ -37,9 +41,13 @@ export default function ClientsPage() {
         console.error(error);
       }
     };
-    if (user?.uid) fetchSubs();
+    if (user) fetchSubs();
+    console.log("done fetching")
+    setLoading(false);
   }, [user]);
 
+  if (loading) return <Loader />;
+  
   return (
     <>
       <SearchBar allClients={allClients}  setVisibleClients={setVisibleClients}/>

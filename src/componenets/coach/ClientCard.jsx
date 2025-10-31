@@ -7,6 +7,7 @@ export default function ClientCard({ client }) {
   const { setSelectedClient, user } = useAuth(); 
 
   if (!client) return "no clients";
+  console.log(client);
 
   const onSelect = () => {
     // adding selected client to global context for easy access
@@ -26,6 +27,7 @@ export default function ClientCard({ client }) {
     navigate(`/chat/${subscriptionId}`);
   };
 
+  // destructuring
   const {
     searchName,
     firstName,
@@ -42,7 +44,7 @@ export default function ClientCard({ client }) {
   const name =
     searchName || `${firstName || ""} ${lastName || ""}`.trim() || "(Unnamed)";
 
-  // format Firestore timestamp → readable date
+  // format Firestore timestamp -> readable date
   const formatDate = (ts) => {
     if (!ts) return "";
     const date = ts.seconds ? new Date(ts.seconds * 1000) : ts;
@@ -50,7 +52,7 @@ export default function ClientCard({ client }) {
   };
 
   return (
-    <div className="card shadow-sm h-100">
+    <div className="card shadow-sm h-100" id="ClientCrad">
       <div className="card-body">
         {/* Header */}
         <div className="d-flex justify-content-between align-items-center mb-2">
@@ -81,7 +83,7 @@ export default function ClientCard({ client }) {
         {phone && (
           <div className="mb-1 text-muted small">
             <i className="bi bi-telephone me-1" />
-            {phone}
+            phone: {phone}
           </div>
         )}
 

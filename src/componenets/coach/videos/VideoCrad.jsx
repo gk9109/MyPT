@@ -1,7 +1,17 @@
 import React, { useState } from "react";
 import { doc, updateDoc, deleteDoc } from "firebase/firestore";
-import { db } from "../../../firebase/config";
+import { ref, deleteObject } from "firebase/storage"; // ✅ for deleting file from Storage
+import { db, storage } from "../../../firebase/config"; // ✅ make sure storage is exported here
 import { useAuth } from "../../../firebase/AuthContext";
+
+/*
+  COMPONENT PURPOSE:
+  ------------------
+  - Displays a single uploaded video (coach or client view).
+  - Allows coaches to edit video name/tag and delete videos.
+  - Clients can only view videos (no edit/delete).
+  - When deleting, it removes BOTH the Firestore doc and the actual file from Firebase Storage.
+*/
 
 export default function VideoCard({ video, coachUid, onDelete, mode = "coach" }) {
   // mode -> "coach" = full access | "client" = view-only
@@ -16,11 +26,17 @@ export default function VideoCard({ video, coachUid, onDelete, mode = "coach" })
     if (!user || mode === "client") return; // protect client side
     try {
       setLoading(true);
+
+      // Reference to the Firestore document of this video
       const videoRef = doc(db, "videos", coachUid, "exercises", video.id);
+
+      // Update the video's name and tag
       await updateDoc(videoRef, {
         name: newName.trim(),
         tag: newTag.trim(),
       });
+
+      // Close edit mode
       setEditing(false);
     } catch (error) {
       console.error("Error updating video:", error);
@@ -29,29 +45,55 @@ export default function VideoCard({ video, coachUid, onDelete, mode = "coach" })
     }
   };
 
-  // --- Delete video ---
+  // --- Delete video from both Firestore and Storage ---
   const handleDelete = async () => {
-    if (!user || mode === "client") return;
-    const confirmDelete = window.confirm("Delete this video?");
+    if (!user || mode === "client") return; // only allow coaches to delete
+
+    // Ask for confirmation before deleting permanently
+    const confirmDelete = window.confirm("Delete this video permanently?");
     if (!confirmDelete) return;
+
     try {
+      setLoading(true);
+
+      // 1️⃣ Extract the filename from the video's download URL
+      // The URL looks like: https://firebasestorage.googleapis.com/v0/b/.../o/videos%2FcoachUid%2FfileName.mp4?...
+      // So we split and decode the part after the last "%2F"
+      const fileName = video.videoUrl.split("%2F").pop().split("?")[0];
+
+      // 2️⃣ Reference the exact file in Firebase Storage
+      const storageRef = ref(storage, `videos/${coachUid}/${fileName}`);
+
+      // 3️⃣ Delete the actual video file from Firebase Storage
+      await deleteObject(storageRef);
+
+      // 4️⃣ Delete the video metadata (document) from Firestore
       const videoRef = doc(db, "videos", coachUid, "exercises", video.id);
       await deleteDoc(videoRef);
-      if (onDelete) onDelete(video.id); // notify parent to refresh
+
+      // 5️⃣ Update local UI list via parent callback
+      if (onDelete) onDelete(video.id);
+
+      alert("✅ Video deleted successfully.");
     } catch (error) {
       console.error("Error deleting video:", error);
+      alert("❌ Failed to delete video. Check console for details.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="card p-3 mb-3 shadow-sm" id="VideoCrad">
+    <div className="card p-3 mb-3 shadow-sm" id="VideoCard">
+      {/* --- Video player preview --- */}
       <video
         src={video.videoUrl}
         controls
         className="w-100 rounded mb-2"
-        style={{ maxHeight: "600px", objectFit: "conatain" }}
+        style={{ maxHeight: "600px", objectFit: "contain" }}
       />
 
+      {/* --- Edit mode section --- */}
       {editing ? (
         <>
           <input
@@ -86,6 +128,7 @@ export default function VideoCard({ video, coachUid, onDelete, mode = "coach" })
         </>
       ) : (
         <>
+          {/* --- Regular (view) mode --- */}
           <h5>{video.name}</h5>
           {video.tag && <p className="text-muted mb-1">Tag: {video.tag}</p>}
           <small className="text-secondary">
@@ -95,6 +138,7 @@ export default function VideoCard({ video, coachUid, onDelete, mode = "coach" })
               : "N/A"}
           </small>
 
+          {/* --- Buttons for coach only --- */}
           {mode === "coach" && (
             <div className="mt-2 d-flex gap-2">
               <button
@@ -106,8 +150,9 @@ export default function VideoCard({ video, coachUid, onDelete, mode = "coach" })
               <button
                 className="btn btn-outline-danger btn-sm"
                 onClick={handleDelete}
+                disabled={loading}
               >
-                Delete
+                {loading ? "Deleting..." : "Delete"}
               </button>
             </div>
           )}

@@ -56,7 +56,7 @@ export default function Login() {
         return;
       }
 
-      // ❌ No match found
+      // No match found
       setError("User data not found in any collection.");
 
     } catch (err) {

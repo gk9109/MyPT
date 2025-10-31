@@ -1,25 +1,23 @@
-// src/components/search/SearchResults.jsx
+// SearchResults.jsx
+// ----------------------------------------------------------
+// This component receives an array of coaches (results)
+// from the parent and displays them as a list of CoachCards.
+// If there are no matches, it shows a simple "No coaches found" message.
+// ----------------------------------------------------------
+
+import React from "react";
 import CoachCard from "./CoachCard";
-import { subscribeToCoach } from "../../Services/subscriptions";
 
-export default function SearchResults({ results = [], clientUid }) {
-  if (!results.length) return null;
+export default function SearchResults({ results }) {
+  // if there are no results, show a message
+  if (!results || results.length === 0)
+    return <p className="mt-3">No coaches found.</p>;
 
-  const onSubscribe = async (coach) => {
-    if (!clientUid) return; 
-    await subscribeToCoach({ coachUid: coach.uid, clientUid });
-  };
-
+  // otherwise, map through results and display each coach card
   return (
-    <div className="d-flex flex-column align-items-center">
+    <div className="d-flex flex-wrap gap-3 mt-3">
       {results.map((coach) => (
-        <div key={coach.docId || coach.uid} className="w-100 mb-3" style={{ maxWidth: 520 }}>
-          <CoachCard
-            coach={coach}
-            mode="search"
-            onFavorite={() => onSubscribe(coach)}
-          />
-        </div>
+        <CoachCard key={coach.id} coach={coach} />
       ))}
     </div>
   );

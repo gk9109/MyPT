@@ -20,6 +20,7 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import Reports from './pages/admin/Reports'
 import UserList from './pages/admin/UserList'
 import SchedulePage from './pages/Coaches/SchedulePage';
+import ClientProfilePage from './pages/Clients/ClientProfilePage';
 
 
 
@@ -53,7 +54,7 @@ function App() {
             <Route path="/clients" element={<ClientListPage />} />
             <Route path="/client-profile" element={<ClientSetUp />} />
             <Route path="/videos" element={<UploadVideosPage />} /> 
-            <Route path='/profile' element={<Profile />} />
+            <Route path='/coach/profile' element={<Profile />} />
             <Route path='/schedule' element={<SchedulePage />} />
 
           </Route>
@@ -64,7 +65,7 @@ function App() {
             <Route path='/search' element={<SearchPage/>} />
             <Route path='/coach-list' element={<CoachListPage/>} />
             <Route path='/plans' element={<CoachSetUp/>} />
-            <Route path='/profile' element={<Profile />} />
+            <Route path='/profile' element={<ClientProfilePage />} />
           </Route>
 
           {/* admin only */}
@@ -72,7 +73,7 @@ function App() {
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/reports" element={<Reports />} />
             <Route path="/admin/users" element={<UserList />} />
-            <Route path='/profile' element={<Profile />} />
+            <Route path='/client/profile' element={<Profile />} />
           </Route>
                  
         </Routes>

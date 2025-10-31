@@ -27,6 +27,7 @@ export default function Register() {
     const phone = phoneRef.current.value.trim();
     const location = locationRef.current.value.trim();
 
+    // validate all inputs were entered
     if (!firstName || !lastName || !email || !password || !phone || !location || !role) {
       setError("All fields are required");
       return;

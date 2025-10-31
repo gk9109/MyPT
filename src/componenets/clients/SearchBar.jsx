@@ -1,110 +1,81 @@
-import React, { useEffect, useState } from "react";
-import { db } from "../../firebase/config";
+// SearchBar.jsx
+// ----------------------------------------------------------
+// This version loads all coaches once on mount
+// and then filters them locally in real time as the user types.
+// No need for a "Search" button anymore.
+// ----------------------------------------------------------
+
+import React, { useState, useEffect } from "react";
 import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../firebase/config";
 
 export default function SearchBar({ setResults }) {
-  const [query, setQuery] = useState("");
-  const [coaches, setCoaches] = useState([]);
-  const [filterType, setFilterType] = useState("none");
-  const [filterValue, setFilterValue] = useState("");
+  // all coaches fetched from Firestore
+  const [allCoaches, setAllCoaches] = useState([]);
+  // user input
+  const [searchTerm, setSearchTerm] = useState("");
+  // selected filter type
+  const [filter, setFilter] = useState("name");
 
-  // Fetch all coaches from Firestore once
+  // ----------------------------------------------------------
+  // Fetch all coaches on first load (runs once)
+  // ----------------------------------------------------------
   useEffect(() => {
-    (async () => {
-      const snap = await getDocs(collection(db, "coaches"));
-      setCoaches(snap.docs.map(d => ({ docId: d.id, ...d.data() })));
-    })();
-  }, []);
+    const fetchCoaches = async () => {
+      const snapshot = await getDocs(collection(db, "coaches"));
+      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      setAllCoaches(data);
+      setResults(data); // show all by default
+    };
+    fetchCoaches();
+  }, [setResults]);
 
-  // Reactive filtering
+  // ----------------------------------------------------------
+  // Whenever user types or changes filter,
+  // run a local filter on the already loaded data
+  // ----------------------------------------------------------
   useEffect(() => {
-  const t = setTimeout(() => {
-    let filtered = coaches;
+    const term = searchTerm.toLowerCase();
 
-    // --- 1. Name filter ---
-    const text = query.trim().toLowerCase();
-    if (text) {
-      filtered = filtered.filter(u => {
-        const full = `${u.firstName ?? ""} ${u.lastName ?? ""}`.toLowerCase();
-        return full.includes(text);
-      });
-    }
+    const filtered = allCoaches.filter((coach) => {
+      if (filter === "name") {
+        return coach.searchName?.toLowerCase().includes(term);
+      } else if (filter === "location") {
+        return coach.location?.toLowerCase().includes(term);
+      } else if (filter === "price") {
+        // placeholder until price field exists
+        return true;
+      }
+      return false;
+    });
 
-    // --- 2. Location filter ---
-    if (filterType === "location" && filterValue) {
-      filtered = filtered.filter(u =>
-        (u.location ?? "").toLowerCase().includes(filterValue.toLowerCase())
-      );
-    }
-
-    // --- 3. (Future) Price range or other filters ---
-    if (filterType === "price" && filterValue) {
-      const [min, max] = filterValue.split("-").map(Number);
-      filtered = filtered.filter(u => {
-        const price = u.price ?? 0;
-        return (!min || price >= min) && (!max || price <= max);
-      });
-    }
-
-    // --- 4. If no filters at all, show nothing ---
-    const noFilters = !text && !filterValue;
-    setResults?.(noFilters ? [] : filtered);
-  }, 250);
-
-  return () => clearTimeout(t);
-}, [query, coaches, setResults, filterType, filterValue]);
-
+    setResults(filtered);
+  }, [searchTerm, filter, allCoaches, setResults]);
 
   return (
-    <div className="mb-3">
-      {/* Search input */}
+    // Flex container keeps all elements on one line
+    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+      {/* text input for live search */}
       <input
-        type="search"
-        className="form-control mb-2"
-        placeholder="Search coaches..."
-        autoComplete="off"
-        value={query}
-        onChange={e => setQuery(e.target.value)}
+        type="text"
+        placeholder={`Search by ${filter}...`}
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="form-control"
+        style={{ maxWidth: "250px" }}
       />
 
-      {/* Dynamic filter controls */}
-      <div className="d-flex gap-2">
-        <select
-          className="form-select"
-          style={{ maxWidth: 150 }}
-          value={filterType}
-          onChange={e => {
-            setFilterType(e.target.value);
-            setFilterValue(""); // reset when changing type
-          }}
-        >
-          <option value="none">No filter</option>
-          <option value="location">Location</option>
-          <option value="price">Price range</option>
-        </select>
-
-        {filterType === "location" && (
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Type location..."
-            value={filterValue}
-            onChange={e => setFilterValue(e.target.value)}
-            style={{ maxWidth: 200 }}
-          />
-        )}
-
-        {filterType === "price" && (
-          <input
-            type="text"
-            className="form-control"
-            placeholder="e.g. 50-100"
-            value={filterValue}
-            onChange={e => setFilterValue(e.target.value)}
-            style={{ maxWidth: 200 }}
-          />
-        )}
-      </div>
+      {/* dropdown to choose what to filter by */}
+      <select
+        value={filter}
+        onChange={(e) => setFilter(e.target.value)}
+        className="form-select"
+        style={{ maxWidth: "150px" }}
+      >
+        <option value="name">Name</option>
+        <option value="location">Location</option>
+        <option value="price">Price</option>
+      </select>
     </div>
   );
 }

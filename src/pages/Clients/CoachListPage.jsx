@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react'
 import { useAuth } from '../../firebase/AuthContext'
 import CoachCard from '../../componenets/clients/CoachCard'
 import { client_CoachList } from '../../Services/subscriptions'
+import  Loader  from '../../componenets/shared/Loader'
 
 export default function CoachListPage() {
   const [allCoaches, setAllCoaches] = useState([]);
+  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -26,7 +28,10 @@ export default function CoachListPage() {
     }
 
     fetchCoaches()
+    setLoading(false);
   }, [user])
+
+  if(loading) return <Loader />
 
   return (
     <div className="d-flex flex-column align-items-center gap-3">
