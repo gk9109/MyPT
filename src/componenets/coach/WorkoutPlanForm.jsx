@@ -1,10 +1,13 @@
 import { useState } from "react";
+import { useAuth } from "../../firebase/AuthContext";
 
 export default function WorkoutPlanForm({ initialTitle = "", initialExercises = [], onSave }) {
   const [title, setTitle] = useState(initialTitle);
   const [exercises, setExercises] = useState(
     initialExercises.length > 0 ? initialExercises : [{ name: "", sets: "", reps: "", notes: "" }]
   );
+  const { user } = useAuth();
+  const userRole = user.role;
 
   const handleAddExercise = () => {
     // ...exercises -> copies everything already in the array (so you keep the old inputs).
@@ -24,7 +27,7 @@ export default function WorkoutPlanForm({ initialTitle = "", initialExercises = 
   };
 
   return (
-    <div className="border border-dark-subtle p-3 card shadow">
+    <div id="workout form" className="border border-dark-subtle p-3 card shadow">
       <label className="form-label">Workout Title</label>
       <input
         type="text"
@@ -90,6 +93,7 @@ export default function WorkoutPlanForm({ initialTitle = "", initialExercises = 
             + Add Exercise
           </button>
         </div>
+        {/* submit type button */}
         <button type="submit" className="btn btn-success">
           Save Workout Plan
         </button>

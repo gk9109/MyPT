@@ -4,6 +4,8 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../../firebase/config";
 import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "../../firebase/AuthContext";
+import { Link } from "react-router-dom";
+
 
 export default function Login() {
   const { user } = useAuth();
@@ -108,9 +110,9 @@ export default function Login() {
                 </div>
 
                 <div className="text-center mt-3">
-                  <a href="#" className="text-muted">
-                    Forgot password? ADD THIS PART
-                  </a>
+                  <Link to="/PasswordReset" className="text-muted">
+                    Forgot/reset password?
+                  </Link>
                 </div>
               </form>
             </div>

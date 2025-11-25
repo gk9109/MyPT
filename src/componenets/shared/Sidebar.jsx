@@ -28,7 +28,7 @@ export default function Sidebar() {
     { to: "/coach-list",   label: "Coach List" },
     // { to: "/diet",     label: "Nutrition Plan" },
     // { to: "/workout",  label: "Workout Plan" },
-    { to: "/progress", label: "Progress" }
+    // { to: "/progress", label: "Progress" }
   ];
 
   // menu items only coaches should see

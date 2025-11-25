@@ -4,6 +4,7 @@ import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
 import { subId } from "../../Models/subscriptions";
 import WorkoutPlanForm from "../../componenets/coach/WorkoutPlanForm";
 import { useAuth } from "../../firebase/AuthContext";
+import WorkoutPlanDisplay from "../../componenets/clients/WorkoutPlanDisplay";
 
 export default function WorkoutPlanList({ coachUid, clientUid }) {
   const { user, selectedClient } = useAuth();
@@ -47,32 +48,50 @@ export default function WorkoutPlanList({ coachUid, clientUid }) {
   if (plans.length === 0) return <p>No workout plans found.</p>;
 
   return (
-    <div>
-      {/* → Map through all fetched plans */}
-      {plans.map((plan) => (
-        <div key={plan.docId} className="mb-4">
-          <WorkoutPlanForm
-            initialTitle={plan.title}
-            initialExercises={plan.exercises}
-            // → When user updates a plan, update the Firestore document
-            onSave={async (updated) => {
-              try {
-                const subRef = doc(db, "subscriptions", subId(effectiveCoachUid, effectiveClientUid));
-                const planRef = doc(subRef, "workout", plan.docId);
+    <div id="workout plan list">
+      {plans.length === 0 ? (
+        <p>No workout plans found.</p>
+      ) : user.role === "coach" ? (
+        // COACH VIEW — can edit and save
+        plans.map((plan) => (
+          <div key={plan.docId} className="mb-4" id="workout list">
+            <WorkoutPlanForm
+              initialTitle={plan.title}
+              initialExercises={plan.exercises}
+              onSave={async (updated) => {
+                try {
+                  const subRef = doc(
+                    db,
+                    "subscriptions",
+                    subId(effectiveCoachUid, effectiveClientUid)
+                  );
+                  const planRef = doc(subRef, "workout", plan.docId);
 
-                await updateDoc(planRef, {
-                  ...updated,
-                  updatedAt: new Date(),
-                });
+                  await updateDoc(planRef, {
+                    ...updated,
+                    updatedAt: new Date(),
+                  });
 
-                console.log("Plan updated:", plan.docId);
-              } catch (err) {
-                console.error("Error updating plan:", err);
-              }
-            }}
-          />
-        </div>
-      ))}
+                  console.log("Plan updated:", plan.docId);
+                } catch (err) {
+                  console.error("Error updating plan:", err);
+                }
+              }}
+            />
+          </div>
+        ))
+      ) : (
+        // CLIENT VIEW — can see and mark progress
+        plans.map((plan) => (
+          <div key={plan.docId} className="mb-4" id="workout list">
+            <WorkoutPlanDisplay
+              title={plan.title}
+              exercises={plan.exercises}
+            />
+          </div>
+        ))
+      )}
     </div>
-  );
+);
+
 }

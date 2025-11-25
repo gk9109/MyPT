@@ -5,10 +5,14 @@ import { useNavigate } from "react-router-dom";
 import { createUserProfile } from "../../Services/users";
 
 export default function Register() {
+  // role starts as "client" so the dropdown has a default
   const [role, setRole] = useState("client");
+  // used to show any registration errors to the user
   const [error, setError] = useState("");
+  // used to redirect the user after successful registration
   const navigate = useNavigate();
 
+  // using refs because the inputs are uncontrolled (simpler than controlled state)
   const firstNameRef = useRef();
   const lastNameRef = useRef();
   const emailRef = useRef();
@@ -16,10 +20,18 @@ export default function Register() {
   const phoneRef = useRef();
   const locationRef = useRef();
 
+  // simple regex that checks basic email structure
+  function isValidEmail(email) {
+    const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // test -> returns true/false depending on whether the email matches the pattern
+    return pattern.test(email);
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
+    // reading input values directly from refs
     const firstName = firstNameRef.current.value.trim();
     const lastName = lastNameRef.current.value.trim();
     const email = emailRef.current.value.trim();
@@ -27,43 +39,54 @@ export default function Register() {
     const phone = phoneRef.current.value.trim();
     const location = locationRef.current.value.trim();
 
-    // validate all inputs were entered
+    // making sure nothing is empty
     if (!firstName || !lastName || !email || !password || !phone || !location || !role) {
       setError("All fields are required");
       return;
     }
 
+    // basic email validation before calling Firebase
+    if (!isValidEmail(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
     try {
-      // Create the auth user
+      // creates a new Firebase Auth user (email + password)
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       const uid = cred.user.uid;
 
       try {
-        // Create the Firestore user profile (uniform schema under users/{uid})
+        // saving additional user details inside Firestore under users/{uid}
+        // so Auth handles login, and Firestore stores profile data
         await createUserProfile({
           uid,
           email,
-          role,        // "client" or "coach"
+          role,        // stored so the system knows if it's a coach or a client
           firstName,
           lastName,
           phone,
           location,
         });
 
+        // after registration and saving profile -> move user to profile page
         navigate("/profile");
 
       } catch (e) {
+        // if Firestore write fails, delete the newly created Auth user
+        // prevents "orphan" Auth accounts with no profile
         await deleteUser(cred.user);
         throw e;
       }
     } catch (err) {
-      if (err.code ==="auth/email-already-in-use"){
+      // Firebase gives a specific error when email already exists
+      if (err.code === "auth/email-already-in-use") {
         setError("Email already in use. Try logging in.");
       } else {
+        // any other unexpected error gets printed + shown to the user
         console.error(err);
-      setError(err.message);
+        setError(err.message);
       }
-      
     }
   };
 
@@ -72,6 +95,7 @@ export default function Register() {
       <h2 className="mb-4 text-center">Register</h2>
 
       <form onSubmit={handleSubmit} className="mx-auto" style={{ maxWidth: "400px" }}>
+        {/* shows validation or Firebase errors above the form */}
         {error && <div className="alert alert-danger">{error}</div>}
 
         <div className="mb-3">
@@ -86,6 +110,7 @@ export default function Register() {
 
         <div className="mb-3">
           <label className="form-label">Email</label>
+          {/* type=email gives minimal browser validation, but we still do our own check */}
           <input type="email" ref={emailRef} className="form-control" placeholder="you@example.com" />
         </div>
 
@@ -106,12 +131,14 @@ export default function Register() {
 
         <div className="mb-4">
           <label className="form-label">Role</label>
+          {/* selecting between client/coach determines how profile is stored later */}
           <select value={role} onChange={(e) => setRole(e.target.value)} className="form-select">
             <option value="client">Client</option>
             <option value="coach">Coach</option>
           </select>
         </div>
 
+        {/* triggers handleSubmit */}
         <button type="submit" className="btn btn-primary w-100">
           Register
         </button>

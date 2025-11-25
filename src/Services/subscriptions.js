@@ -1,9 +1,6 @@
 import { db } from "../firebase/config";
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "firebase/firestore";
 import { SUBS_COLLECTION, subId } from "../Models/subscriptions";
-import { useAuth } from "../firebase/AuthContext";
-import { data } from "react-router-dom";
-
 
 export async function subscribeToCoach({ coachUid, clientUid }) {
   let searchName = "";
@@ -40,9 +37,9 @@ export async function subscribeToCoach({ coachUid, clientUid }) {
       { merge: true }
     );
 
-    console.log("✅ Subscription created successfully");
+    console.log("Subscription created successfully");
   } catch (error) {
-    console.log("❌ Error subscribing:", error);
+    console.log("Error subscribing:", error);
   }
 }
 

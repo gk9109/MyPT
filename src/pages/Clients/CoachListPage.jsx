@@ -3,6 +3,7 @@ import { useAuth } from '../../firebase/AuthContext'
 import CoachCard from '../../componenets/clients/CoachCard'
 import { client_CoachList } from '../../Services/subscriptions'
 import  Loader  from '../../componenets/shared/Loader'
+import DataGate from '../../componenets/shared/DataGate'
 
 export default function CoachListPage() {
   const [allCoaches, setAllCoaches] = useState([]);
@@ -11,7 +12,6 @@ export default function CoachListPage() {
 
   useEffect(() => {
     const fetchCoaches = async () => {
-      if (!user) return
       try {
         // Fetch all active coaches for this client (from subscriptions collection)
         const coaches = await client_CoachList(user.uid)
@@ -24,28 +24,32 @@ export default function CoachListPage() {
         setAllCoaches(ordered)
       } catch (error) {
         console.error("Error fetching client’s coaches:", error)
+      } finally {
+        setLoading(false);
       }
     }
 
     fetchCoaches()
-    setLoading(false);
+    
   }, [user])
 
   if(loading) return <Loader />
 
   return (
-    <div className="d-flex flex-column align-items-center gap-3">
-      {/* If no coaches are found, display a fallback message */}
-      {allCoaches.length === 0 ? (
-        <p>No coaches found.</p>
-      ) : (
-        // Otherwise, render a grid of CoachCards
-        allCoaches.map(coach => (
-          <div key={coach.uid} className="col-md-12">
-            <CoachCard coach={coach} />
-          </div>
-        ))
-      )}
-    </div>
+    <DataGate data={allCoaches} >
+      <div className="d-flex flex-column align-items-center gap-3">
+        {/* If no coaches are found, display a fallback message */}
+        {allCoaches.length === 0 ? (
+          <p>No coaches found.</p>
+        ) : (
+          // Otherwise, render a grid of CoachCards
+          allCoaches.map(coach => (
+            <div key={coach.uid} className="col-md-12">
+              <CoachCard coach={coach} />
+            </div>
+          ))
+        )}
+      </div>
+    </DataGate>
   )
 }

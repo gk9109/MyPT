@@ -1,62 +1,78 @@
 import ProgressForm from "../../componenets/clients/ProgressForm"
 import ProgressCharts from "../../componenets/clients/ProgressCharts"
-import { addDailyProgress, lastMonth, lastSixMonth, lastWeek, lastYear } from '../../Services/progress'
+import { addDailyProgress, dailyPieData, getProgress } from '../../Services/progress'
 import { useAuth } from "../../firebase/AuthContext"
 import { useState, useEffect } from "react";
-import { getProgress } from '../../Services/progress';
+import { getMealBank } from '../../Services/mealBank'
 
 export default function ClientProfilePage() {
   const { user } = useAuth(); 
+    const uid = user.uid;
   const [progressData, setProgressData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filtered, setFiltered] = useState([]);
-  const [filter, setFilter] = useState("all");
+  const [filtered, setFiltered] = useState([]); 
+  const [customMeals, setCustomMeals] = useState([]);
+  const [liveMeals, setLiveMeals] = useState([]);
+  const [todayMeals, setTodayMeals] = useState([]);
 
-  const uid = user.uid;
+  useEffect(() => {
+    async function fetchData(){
+      try {         
+        const data = await getProgress(uid);
+        setProgressData(data);
+        setFiltered(data);
 
-    useEffect(() => {
-        async function fetchData(){
-            try {
-                
-                const data = await getProgress(uid);
-                setProgressData(data);
-                setFiltered(data);
-                setLoading(false);
-            } catch (error) {
-                console.log(error)
-            }         
-        }
-        fetchData();
-    }, [uid]);
+        const meals = await getMealBank(uid);
+        setCustomMeals(meals);
+
+        setLoading(false);
+      } catch (error) {
+        console.log(error)
+      }         
+    }
+    fetchData();
+  }, [uid]);
+
+  // fetching TODAYS meals
+  useEffect(() => {
+    async function fetchTodayMeals() {
+      try {
+        const today = new Date().toISOString().split("T")[0]; // "2025-11-20"
+        const meals = await dailyPieData(uid, today);
+
+        // If meals exist → save them, else save empty array
+        setTodayMeals(meals || []);
+      } catch (err) {
+        console.log("Error loading pie data (useeffect):", err);
+      }
+    }
+
+    fetchTodayMeals();
+  }, [uid]);
+
 
   // hanldes saving progress using /srvices/progress.js logic
   const handleSaveProgress = async (entry) => {
     try {
-        // const uid = user.uid;
+      // const uid = user.uid;
     await addDailyProgress(uid, entry);
-    console.log("success!", uid, entry);
+    console.log("success saving progress to collection!", uid, entry);
     } catch (error) {
-        console.log(error);
+      console.log(error);
     }
   }
-
-  useEffect(() => {
-    if (filter === "week") setFiltered(lastWeek(progressData));
-    else if (filter === "month") setFiltered(lastMonth(progressData));
-    else if (filter === "6months") setFiltered(lastSixMonth(progressData));
-    else if (filter === "year") setFiltered(lastYear(progressData));
-    else setFiltered(progressData);
-  }, [filter, progressData]);
 
   return (
     <div>
         {/* passing saving logic to progress form */}
-        <ProgressForm onSave={handleSaveProgress}/>
+        <ProgressForm onSave={handleSaveProgress} customMeals={customMeals} onLiveMeals={setLiveMeals} />
         {/* passing data and loading state to charts */}
         <ProgressCharts
-            data={filtered}
-            loading={loading}
-            onFilterChange={setFilter}
+          data={filtered}
+          loading={loading}
+          todayMeals={todayMeals}
+          // onFilterChange={setFilter}
+          liveMeals={liveMeals}
         />
     </div>
   )

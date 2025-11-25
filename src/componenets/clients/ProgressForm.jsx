@@ -1,13 +1,26 @@
 import { serverTimestamp } from "firebase/firestore";
-import { useState } from "react";
-import { Button } from "react-bootstrap"; // optional if you use Bootstrap
+import { useEffect, useState } from "react";
+import { Button } from "react-bootstrap";
+import FoodSearchBar from "./FoodSearchBar";
+import MealBank from "./MealBank";
+import CustomMeals from "./customMeals";
+import { useAuth } from "../../firebase/AuthContext";
+import MealsToBeAdded from "./MealsToBeAdded";
 
-export default function ProgressForm({ onSave }) {
+export default function ProgressForm({ onSave, customMeals, onLiveMeals }) {
   // --- State management for inputs ---
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10)); // yyyy-mm-dd
   const [weight, setWeight] = useState("");
-  const [meals, setMeals] = useState([{ name: "", items: "", calories: "" }]);
-  const [notes, setNotes] = useState("");
+  const [meals, setMeals] = useState([{ name: "", items: "", calories: "", protein: "", carbs: "", fat: ""}]);
+  const [loggedMeals, setLoggedMeals] = useState([]);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (onLiveMeals) {
+      onLiveMeals(loggedMeals);  
+    }
+  }, [loggedMeals, onLiveMeals]);
+
 
   // --- Handlers ---
   const handleMealChange = (index, field, value) => {
@@ -18,30 +31,26 @@ export default function ProgressForm({ onSave }) {
 
   // copy the array, add meal and setMeals()
   const addMeal = () => {
-    setMeals([...meals, { name: "", items: "", calories: "" }]);
+    setMeals([...meals, { name: "", items: "", calories: "", protein: "", carbs: "", fat: "" }]);
   };
-
- //   const removeMeal = (index) => {
- //     const updated = meals.filter((_, i) => i !== index);
- //     setMeals(updated);
- //   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Calculate total calories
-    const totalCalories = meals.reduce(
-      (sum, m) => sum + Number(m.calories || 0),
-      0
-    );
+    // reduce -> calc the total values, reducing the array values to a single value -> sum
+    const totalCalories = loggedMeals.reduce((sum, m) => sum + Number(m.calories || 0), 0);
+    const totalProtein = loggedMeals.reduce((sum, m) => sum + Number(m.protein || 0), 0);
+    const totalCarbs = loggedMeals.reduce((sum, m) => sum + Number(m.carbs || 0), 0);
+    const totalFat = loggedMeals.reduce((sum, m) => sum + Number(m.fat || 0), 0);
 
     const progressEntry = {
-      date,
-      //converting to number
-      weight: Number(weight),
-      meals,
+      date,    
+      weight: Number(weight), // converting to number
+      meals: loggedMeals,
       totalCalories,
-      notes,
+      totalProtein,
+      totalCarbs,
+      totalFat,
       createdAt: serverTimestamp()
     };
 
@@ -49,10 +58,24 @@ export default function ProgressForm({ onSave }) {
     
   };
 
-  // --- Render ---
+  const removeMeal = (index) => {
+    const updated = [...meals];
+    updated.splice(index, 1);
+    setMeals(updated);
+  };
+
+  const removeLoggedMeal = (index) => {
+    setLoggedMeals(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddMealFromBank = (meal) => {
+    setLoggedMeals((prev) => [...prev, meal]);
+    console.log("meal added to bank")
+  };
+
   return (
     <form onSubmit={handleSubmit} className="progress-form container p-3">
-      <h3 className="mb-3">Daily Progress</h3>
+      <h3 className="mb-3">Daily Progress - {user.searchName}</h3>
 
       <div className="mb-3">
         <label>Date:</label>
@@ -74,60 +97,19 @@ export default function ProgressForm({ onSave }) {
         />
       </div>
 
-      <h5 className="mt-4">Meals ADD API</h5>
-      {meals.map((meal, index) => (
-        <div key={index} className="meal-block border p-2 rounded mb-2">
-          <input
-            type="text"
-            placeholder="Meal name (Breakfast, Lunch...)"
-            value={meal.name}
-            onChange={(e) =>
-              handleMealChange(index, "name", e.target.value)
-            }
-            className="form-control mb-1"
-          />
-          <input
-            type="text"
-            placeholder="Food items"
-            value={meal.items}
-            onChange={(e) =>
-              handleMealChange(index, "items", e.target.value)
-            }
-            className="form-control mb-1"
-          />
-          <input
-            type="number"
-            placeholder="Calories"
-            value={meal.calories}
-            onChange={(e) =>
-              handleMealChange(index, "calories", e.target.value)
-            }
-            className="form-control mb-1"
-          />
-
-          <Button
-            variant="outline-danger"
-            size="sm"
-            onClick={() => removeMeal(index)}
-          >
-            Remove
-          </Button>
-        </div>
-      ))}
-
-      <Button variant="outline-primary" type="button" onClick={addMeal}>
-        + Add Meal
-      </Button>
+      <CustomMeals
+        meals={meals}
+        onMealChange={handleMealChange}
+        onAddMeal={addMeal}
+        onRemoveMeal={removeMeal}
+      />
 
       <div className="mt-3 mb-3">
-        <label>Notes:</label>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          className="form-control"
-          rows={3}
-          placeholder="How was your day? Workout, trip, etc..."
-        ></textarea>
+        <MealBank customMeals={customMeals} onAddMeal={handleAddMealFromBank}/>
+      </div>
+
+      <div className="mt-3 mb-3">
+        <MealsToBeAdded meals={loggedMeals} onRemove={removeLoggedMeal}/>
       </div>
 
       <Button variant="success" type="submit">

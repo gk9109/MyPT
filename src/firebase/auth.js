@@ -27,8 +27,9 @@ export const doSignOut = () => {
 
 //reset password
 export const doPasswordReset = (email) => {
-    return updatePassword(auth.currentUser, password);
+    return sendPasswordResetEmail(auth, email);
 };
+
 
 //send email varification
 export const doSendEmailVerification = () => {

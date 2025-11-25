@@ -17,7 +17,7 @@ export default function Home() {
     <div id="LoginPage" className="d-flex flex-column flex-md-row overflow-hidden border border-black card shadow"
        style={{ height: "70vh" }}>
       {/* --- Left side: text + buttons --- */}
-      <div className="d-flex flex-column justify-content-center align-items-center flex-fill p-4 text-center bg-secondary-subtle">
+      <div className="d-flex flex-column justify-content-center align-items-center flex-fill p-4 text-center bg-warning-subtle">
         <h1 className="mb-3">
           Welcome to <span className="text-primary">MyPT</span>
         </h1>
@@ -37,7 +37,7 @@ export default function Home() {
       </div>
 
       {/* --- Right side: animation --- */}
-      <div className="d-flex align-items-center justify-content-center flex-fill overflow-hidden bg-secondary-subtle">
+      <div className="d-flex align-items-center justify-content-center flex-fill overflow-hidden bg-warning-subtle">
         <div id="animation" className="w-75" style={{ maxWidth: 350 }}>
               {/*  The animation itself */}
           <Lottie animationData={dumbbellAnim} loop />

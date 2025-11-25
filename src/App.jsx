@@ -21,6 +21,7 @@ import Reports from './pages/admin/Reports'
 import UserList from './pages/admin/UserList'
 import SchedulePage from './pages/Coaches/SchedulePage';
 import ClientProfilePage from './pages/Clients/ClientProfilePage';
+import PasswordReset from './pages/Shared/PasswordReset';
 
 
 
@@ -35,6 +36,7 @@ function App() {
             <Route path="/home" element={<Home />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/PasswordReset" element={<PasswordReset />} />
           </Route>
           
           

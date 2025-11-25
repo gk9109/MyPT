@@ -25,11 +25,11 @@ export default function ProtectedRoute({ allow, children }) {
   const role = user.role?.toLowerCase();
   console.log("ProtectedRoute role:", role, "allow:", allow);
   if (allow && role !== allow.toLowerCase()) {
-  // redirect admins (or anyone else) to their default dashboard
-  if (role === "admin") return <Navigate to="/admin/dashboard" replace />;
-  if (role === "coach") return <Navigate to="/profile" replace />;
-  if (role === "client") return <Navigate to="/profile" replace />;
-}
+    // redirect admins (or anyone else) to their default dashboard
+    if (role === "admin") return <Navigate to="/admin/dashboard" replace />;
+    if (role === "coach") return <Navigate to="/profile" replace />;
+    if (role === "client") return <Navigate to="/profile" replace />;
+  }
 
 
 
