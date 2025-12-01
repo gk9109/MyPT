@@ -22,6 +22,8 @@ import UserList from './pages/admin/UserList'
 import SchedulePage from './pages/Coaches/SchedulePage';
 import ClientProfilePage from './pages/Clients/ClientProfilePage';
 import PasswordReset from './pages/Shared/PasswordReset';
+import ArticlePage from './pages/Clients/ArticlePage';
+import CoachProfilePage from './pages/Coaches/CoachProfilePage';
 
 
 
@@ -56,9 +58,9 @@ function App() {
             <Route path="/clients" element={<ClientListPage />} />
             <Route path="/client-profile" element={<ClientSetUp />} />
             <Route path="/videos" element={<UploadVideosPage />} /> 
-            <Route path='/coach/profile' element={<Profile />} />
+            <Route path='/profile' element={<CoachProfilePage />} />
             <Route path='/schedule' element={<SchedulePage />} />
-
+        
           </Route>
 
           {/* clients only */}
@@ -68,6 +70,8 @@ function App() {
             <Route path='/coach-list' element={<CoachListPage/>} />
             <Route path='/plans' element={<CoachSetUp/>} />
             <Route path='/profile' element={<ClientProfilePage />} />
+            <Route path='/profile' element={<ClientProfilePage />} />
+            <Route path='/daily-article' element={<ArticlePage />} />
           </Route>
 
           {/* admin only */}

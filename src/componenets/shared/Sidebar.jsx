@@ -26,6 +26,7 @@ export default function Sidebar() {
   const CLIENT = [
     { to: "/search",   label: "Search" },
     { to: "/coach-list",   label: "Coach List" },
+    // { to: "/daily-article",   label: "Daily Article" },
     // { to: "/diet",     label: "Nutrition Plan" },
     // { to: "/workout",  label: "Workout Plan" },
     // { to: "/progress", label: "Progress" }

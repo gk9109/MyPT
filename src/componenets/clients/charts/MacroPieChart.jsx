@@ -48,7 +48,8 @@ export default function MacroPieChart({ todayMeals = [], liveMeals = [] }) {
     : ["#4285F4", "#F4B400", "#DB4437"]; // Protein (blue) / Carbs (yellow) / Fat (red)
 
   return (
-    <div style={{ width: "100%", height: 330 }}>
+    <div className="mb-5" style={{ width: "100%", height: 330 }}>
+      
       <h6 className="mb-3">Macronutrient Breakdown</h6>
 
       <ResponsiveContainer>

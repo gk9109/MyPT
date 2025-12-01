@@ -38,7 +38,7 @@ export async function addDailyProgress(uid, entry) {
         await addDoc(progressRef, {
           date: dateString,
           weight: entry.weight,
-          meals: entry.meals,
+          meals: entry.meals || [],
           createdAt: entry.createdAt
         });
 
@@ -105,3 +105,96 @@ export async function dailyPieData(uid, dateString) {
       return null;
     }
 }   
+
+// Aggregate total sets/reps per exercise across all progress docs
+export async function getWorkoutTotals(uid) {
+  try {
+    const progressRef = collection(db, "clients", uid, "progress");
+    const snap = await getDocs(progressRef);
+
+    const totals = {}; // { bench press: { totalSets, totalReps } }
+
+    snap.forEach((docSnap) => {
+      const data = docSnap.data();
+      const workouts = Array.isArray(data.workouts) ? data.workouts : [];
+
+      workouts.forEach((w) => {
+        (w.exercises || []).forEach((ex) => {
+
+          const name = ex.name;
+          if (!name) return;
+
+          const setsDone = Number(ex.completedSets || 0);
+          const repsPerSet = Number(ex.reps || 0);
+          const repsDone = setsDone * repsPerSet;
+
+          if (!totals[name]) {
+            totals[name] = {
+              name,
+              totalSets: 0,
+              totalReps: 0,
+            };
+          }
+
+          totals[name].totalSets += setsDone;
+          totals[name].totalReps += repsDone;
+        });
+      });
+    });
+
+    return Object.values(totals);
+  } catch (error) {
+    console.log("error getting workout totals:", error);
+    return [];
+  }
+}
+
+
+// Save or update a workout for a given user + date
+export async function saveWorkoutProgress(uid, workoutData, dateString) {
+  try {
+    const progressRef = collection(db, "clients", uid, "progress");
+
+    // Try to find today's progress doc
+    const q = query(progressRef, where("date", "==", dateString));
+    const snap = await getDocs(q);
+
+    if (!snap.empty) {
+      // --- UPDATE EXISTING DOC ---
+      const docId = snap.docs[0].id;
+      const docRef = doc(db, "clients", uid, "progress", docId);
+      const existing = snap.docs[0].data();
+      const workouts = existing.workouts || [];
+
+      // Try to find an existing workout by title
+      const index = workouts.findIndex(w => w.title === workoutData.title);
+      // -1 means not found
+      if (index !== -1) {
+        // Update in place
+        workouts[index] = workoutData;
+      } else {
+        // Add as new workout
+        workouts.push(workoutData);
+      }
+
+      await updateDoc(docRef, { workouts });
+
+      return { updated: true };
+    }
+
+    // --- CREATE NEW DOC ---
+    await addDoc(progressRef, {
+      date: dateString,
+      createdAt: new Date().toISOString(),
+      meals: [],
+      weight: null,
+      workouts: [workoutData]
+    });
+
+    return { created: true };
+
+  } catch (err) {
+    console.error("saveWorkoutProgress error:", err);
+    return { error: err };
+  }
+}

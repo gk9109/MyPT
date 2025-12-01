@@ -3,6 +3,8 @@ import Header from "./Header";
 import Sidebar from "./Sidebar";
 import { useState } from "react";
 import AuthGate from "./AuthGate";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Layout({ children }) {
   const [showSidebar, setShowSidebar] = useState(true);
@@ -21,6 +23,7 @@ export default function Layout({ children }) {
 
         <Footer />
       </div>
+      <ToastContainer position="bottom-center" autoClose={2500} />
     </AuthGate>
   );
 }
