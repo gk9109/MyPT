@@ -1,46 +1,12 @@
-import React, { useEffect, useState } from "react";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import { db } from "../../../firebase/config";
-import { useAuth } from "../../../firebase/AuthContext";
+import React from "react";
 import VideoCard from "../videos/VideoCrad";
 
-export default function VideoList({ mode = "coach", searchTerm = "" }) {
-  const { user } = useAuth();
-  const [videos, setVideos] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  // --- Fetch all videos for this coach ---
-  useEffect(() => {
-    if (!user) return;
-    const fetchVideos = async () => {
-      try {
-        setLoading(true);
-        const q = query(
-          collection(db, "videos", user.uid, "exercises"),
-          orderBy("createdAt", "desc")
-        );
-        const snapshot = await getDocs(q);
-        const list = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setVideos(list);
-      } catch (error) {
-        console.error("Error loading videos:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchVideos();
-  }, [user, ]);
-
-  // --- Handle delete from child card ---
+export default function VideoList({ mode = "coach", searchTerm = "", videos = [], setVideos }) {
   const handleDelete = (videoId) => {
+    if (!setVideos) return;
     setVideos((prev) => prev.filter((v) => v.id !== videoId));
   };
 
-  // --- Filter by search term (name or tag) ---
   const filteredVideos = videos.filter((v) => {
     const term = searchTerm.toLowerCase();
     return (
@@ -49,7 +15,6 @@ export default function VideoList({ mode = "coach", searchTerm = "" }) {
     );
   });
 
-  if (loading) return <p>Loading videos...</p>;
   if (!videos.length) return <p>No videos uploaded yet.</p>;
 
   return (
@@ -58,7 +23,7 @@ export default function VideoList({ mode = "coach", searchTerm = "" }) {
         <VideoCard
           key={video.id}
           video={video}
-          coachUid={user.uid}
+          coachUid={video.coachUid}
           mode={mode}
           onDelete={handleDelete}
         />

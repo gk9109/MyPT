@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useAuth } from "../../firebase/AuthContext";
+import { toast } from "react-toastify";
 
-export default function WorkoutPlanForm({ initialTitle = "", initialExercises = [], onSave }) {
+export default function WorkoutPlanForm({ initialTitle = "", initialExercises = [], onSave, coachVideos = []}) {
   const [title, setTitle] = useState(initialTitle);
   const [exercises, setExercises] = useState(
-    initialExercises.length > 0 ? initialExercises : [{ name: "", sets: "", reps: "", notes: "" }]
+    initialExercises.length > 0 ? initialExercises : [{ name: "", sets: "", reps: "", notes: "", videoId: null }]
   );
   const { user } = useAuth();
   const userRole = user.role;
@@ -12,18 +13,36 @@ export default function WorkoutPlanForm({ initialTitle = "", initialExercises = 
   const handleAddExercise = () => {
     // ...exercises -> copies everything already in the array (so you keep the old inputs).
     // { name: "", sets: "", reps: "", notes: "" } -> adds a fresh empty exercise at the end.
-    setExercises([...exercises, { name: "", sets: "", reps: "", notes: "" }]);
+    setExercises([...exercises, { name: "", sets: "", reps: "", notes: "", videoId: null }]);
   };
 
   const handleExerciseChange = (index, field, value) => {
     const updated = [...exercises];
     updated[index][field] = value;
+    if (field --- "name"){
+      updated[index].videoId = null;
+    }
     setExercises(updated);
   };
 
+  const handleSelectSuggestion = (index, video) => {
+    const updated = [...exercises];
+    updated[index].name = video.name || "";
+    updated[index].videoId = video.id; // link to Firestore doc
+    setExercises(updated);
+  };
+
+
   const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave({ title, exercises }); // parent handles Firestore write
+    try {
+      e.preventDefault();
+      onSave({ title, exercises }); // parent handles Firestore write
+       toast.success("Saved successfully");
+    } catch (error) {
+      console.log("error saving workout plan", error);
+      toast.error("Something went wrong, try again"); 
+    }
+    
   };
 
   return (
@@ -38,52 +57,73 @@ export default function WorkoutPlanForm({ initialTitle = "", initialExercises = 
       />
 
       <form onSubmit={handleSubmit} className="mt-3">
-        {exercises.map((exercise, index) => (
-          <div key={index} className="card mb-3 p-3 shadow-sm">
-            <div className="row g-2">
-              <div className="col-md-3">
-                <label className="form-label">Exercise Name</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Exercise Name"
-                  value={exercise.name}
-                  onChange={(e) => handleExerciseChange(index, "name", e.target.value)}
-                />
-              </div>
-              <div className="col-md-2">
-                <label className="form-label">Sets</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Sets"
-                  value={exercise.sets}
-                  onChange={(e) => handleExerciseChange(index, "sets", e.target.value)}
-                />
-              </div>
-              <div className="col-md-2">
-                <label className="form-label">Reps</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Reps"
-                  value={exercise.reps}
-                  onChange={(e) => handleExerciseChange(index, "reps", e.target.value)}
-                />
-              </div>
-              <div className="col-md-5">
-                <label className="form-label">Notes</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Notes"
-                  value={exercise.notes}
-                  onChange={(e) => handleExerciseChange(index, "notes", e.target.value)}
-                />
+        {exercises.map((exercise, index) => {
+          const term = (exercise.name || "").toLowerCase().trim();
+          const suggestions = term.length >= 2 && !exercise.videoId ? coachVideos.filter((vid) => {
+            const name = (vid.name || "").toLowerCase();
+            const tag = (vid.tag || "").toLowerCase();
+            return name.includes(term) || tag.includes(term);
+          }).slice(0, 5) : [];
+          
+          return (
+            <div key={index} className="card mb-3 p-3 shadow-sm">
+              <div className="row g-2">
+                <div className="col-md-3">
+                  <label className="form-label">Exercise Name</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Exercise Name"
+                    value={exercise.name}
+                    onChange={(e) => handleExerciseChange(index, "name", e.target.value)}
+                  />
+                  {suggestions.length > 0 && (
+                    <ul className="list-group mt-1">
+                      {suggestions.map((video) => (
+                        <li key={video.id} className="list-group-item list-group-item-action"
+                          style={{cursor: "pointer"}} onClick={handleSelectSuggestion(index, video)}
+                        >
+                          {video.name}
+                          {video.tag && <span className="text-muted">({video.tag})</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div className="col-md-2">
+                  <label className="form-label">Sets</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Sets"
+                    value={exercise.sets}
+                    onChange={(e) => handleExerciseChange(index, "sets", e.target.value)}
+                  />
+                </div>
+                <div className="col-md-2">
+                  <label className="form-label">Reps</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Reps"
+                    value={exercise.reps}
+                    onChange={(e) => handleExerciseChange(index, "reps", e.target.value)}
+                  />
+                </div>
+                <div className="col-md-5">
+                  <label className="form-label">Notes</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Notes"
+                    value={exercise.notes}
+                    onChange={(e) => handleExerciseChange(index, "notes", e.target.value)}
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+          })}
         <div className="mb-3">
           <button
             type="button"
@@ -99,5 +139,6 @@ export default function WorkoutPlanForm({ initialTitle = "", initialExercises = 
         </button>
       </form>
     </div>
+    
   );
 }

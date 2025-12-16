@@ -7,7 +7,7 @@ import CustomMeals from "./customMeals";
 import { useAuth } from "../../firebase/AuthContext";
 import MealsToBeAdded from "./MealsToBeAdded";
 
-export default function ProgressForm({ onSave, customMeals, onLiveMeals }) {
+export default function ProgressForm({ onSave, customMeals, onLiveMeals, onMealSaved }) {
   // --- State management for inputs ---
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10)); // yyyy-mm-dd
   const [weight, setWeight] = useState("");
@@ -102,6 +102,7 @@ export default function ProgressForm({ onSave, customMeals, onLiveMeals }) {
         onMealChange={handleMealChange}
         onAddMeal={addMeal}
         onRemoveMeal={removeMeal}
+        onMealSaved={onMealSaved}
       />
 
       <div className="mt-3 mb-3">

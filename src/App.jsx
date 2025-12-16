@@ -69,9 +69,9 @@ function App() {
             <Route path='/search' element={<SearchPage/>} />
             <Route path='/coach-list' element={<CoachListPage/>} />
             <Route path='/plans' element={<CoachSetUp/>} />
-            <Route path='/profile' element={<ClientProfilePage />} />
-            <Route path='/profile' element={<ClientProfilePage />} />
-            <Route path='/daily-article' element={<ArticlePage />} />
+            {/* <Route path='/profile' element={<ClientProfilePage />} /> */}
+            <Route path='/client/profile' element={<ClientProfilePage />} />
+            {/* <Route path='/daily-article' element={<ArticlePage />} /> */}
           </Route>
 
           {/* admin only */}
@@ -79,7 +79,7 @@ function App() {
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/reports" element={<Reports />} />
             <Route path="/admin/users" element={<UserList />} />
-            <Route path='/client/profile' element={<Profile />} />
+            {/* <Route path='/client/profile' element={<Profile />} /> */}
           </Route>
                  
         </Routes>

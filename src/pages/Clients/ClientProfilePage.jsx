@@ -4,6 +4,7 @@ import { addDailyProgress, dailyPieData, getProgress } from '../../Services/prog
 import { useAuth } from "../../firebase/AuthContext"
 import { useState, useEffect } from "react";
 import { getMealBank } from '../../Services/mealBank'
+import { toast } from "react-toastify";
 
 export default function ClientProfilePage() {
   const { user } = useAuth(); 
@@ -40,7 +41,7 @@ export default function ClientProfilePage() {
         const today = new Date().toISOString().split("T")[0]; // "2025-11-20"
         const meals = await dailyPieData(uid, today);
 
-        // If meals exist → save them, else save empty array
+        // If meals exist -> save them, else save empty array
         setTodayMeals(meals || []);
       } catch (err) {
         console.log("Error loading pie data (useeffect):", err);
@@ -55,17 +56,29 @@ export default function ClientProfilePage() {
   const handleSaveProgress = async (entry) => {
     try {
       // const uid = user.uid;
-    await addDailyProgress(uid, entry);
-    console.log("success saving progress to collection!", uid, entry);
+      await addDailyProgress(uid, entry);
+      console.log("success saving progress to collection!", uid, entry);
+      toast.success("Saved successfully");
     } catch (error) {
       console.log(error);
+      toast.error("Something went wrong, try again");
     }
   }
+
+    const handleMealSavedToBank = (meal) => {
+      // add the new meal to the existing bank list so UI updates instantly
+      setCustomMeals((prev) => [...prev, meal]);
+    };
+
 
   return (
     <div>
         {/* passing saving logic to progress form */}
-        <ProgressForm onSave={handleSaveProgress} customMeals={customMeals} onLiveMeals={setLiveMeals} />
+        <ProgressForm
+          onSave={handleSaveProgress}
+          customMeals={customMeals}
+          onLiveMeals={setLiveMeals} 
+          onMealSaved={handleMealSavedToBank} />
         {/* passing data and loading state to charts */}
         <ProgressCharts
           data={filtered}

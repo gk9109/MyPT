@@ -1,11 +1,11 @@
 import { addMealToBank } from '../../Services/mealBank';
 import { useAuth } from "../../firebase/AuthContext";
+import { toast } from "react-toastify";
 
+export default function CustomMeals({ meals, onMealChange, onAddMeal, onRemoveMeal, onMealSaved }) {
 
-export default function CustomMeals({ meals, onMealChange, onAddMeal, onRemoveMeal }) {
-
-    const { user } = useAuth();
-    const uid = user.uid;
+  const { user } = useAuth();
+  const uid = user.uid;
 
 
   // this function saves a single meal (by index) into the mealBank collection
@@ -13,16 +13,27 @@ export default function CustomMeals({ meals, onMealChange, onAddMeal, onRemoveMe
     try {
       // basic validation -> no empty names allowed
       if (!meal.name.trim()) {
-        alert("Please give the meal a name before saving.");
+        toast.error("Please make sure the meal has a name and data.");
         return;
       }
 
       // calling our firestore function that creates the subcollection if needed
       await addMealToBank(uid, meal);
+      toast.success("Meal saved successfully");
 
-      alert(`Meal "${meal.name}" saved to your bank.`);
+      // also update local state in ClientProfilePage so Meal Bank updates instantly
+      if (onMealSaved) {
+        const mealForState = {
+          ...meal,
+          // temporary id for React key; Firestore id will be used next reload
+          id: Date.now().toString(),
+        };
+        onMealSaved(mealForState);
+      }
+
     } catch (err) {
       console.log("error saving meal:", err);
+      toast.error("Something went wrong, try again");
     }
   };
 

@@ -74,7 +74,7 @@ export default function SearchBar({ setResults }) {
       >
         <option value="name">Name</option>
         <option value="location">Location</option>
-        <option value="price">Price</option>
+        {/* <option value="price">Price</option> */}
       </select>
     </div>
   );

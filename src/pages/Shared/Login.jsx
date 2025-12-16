@@ -36,16 +36,16 @@ export default function Login() {
       const coachDocRef = doc(db, "coaches", user.uid);
       const coachDoc = await getDoc(coachDocRef);
       if (coachDoc.exists()) {
-        navigate("/profile", { state: { user: coachDoc.data() } });
-        return;
+        // navigate("/profile", { state: { user: coachDoc.data() } });
+        // return;
       }
 
       // Check if user is a client
       const clientDocRef = doc(db, "clients", user.uid);
       const clientDoc = await getDoc(clientDocRef);
       if (clientDoc.exists()) {
-        navigate("/profile", { state: { user: clientDoc.data() } });
-        return;
+        // navigate("/client/profile", { state: { user: clientDoc.data() } });
+        // return;
       }
 
       // Check if user is an admin (fixed collection name)
@@ -54,8 +54,8 @@ export default function Login() {
       const adminDoc = await getDoc(adminDocRef);
       console.log("Admin doc exists:", adminDoc.exists());
       if (adminDoc.exists()) {
-        navigate("/admin/dashboard"); // go to admin dashboard page
-        return;
+        // navigate("/admin/dashboard"); // go to admin dashboard page
+        // return;
       }
 
       // No match found

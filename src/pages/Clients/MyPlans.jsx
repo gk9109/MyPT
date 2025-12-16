@@ -16,7 +16,7 @@ export default function MyPlans() {
   const clientUid = user?.uid;
 
   return (
-    <div className="container border card p-3">
+    <div className="container border card p-3" id="my plans">
       <h4>My Plans</h4>
 
       {/* Tabs */}

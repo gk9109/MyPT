@@ -28,10 +28,8 @@ export default function ProtectedRoute({ allow, children }) {
     // redirect admins (or anyone else) to their default dashboard
     if (role === "admin") return <Navigate to="/admin/dashboard" replace />;
     if (role === "coach") return <Navigate to="/profile" replace />;
-    if (role === "client") return <Navigate to="/profile" replace />;
+    if (role === "client") return <Navigate to="/client/profile" replace />;
   }
-
-
 
   // Render nested routes (<Outlet/>) or direct children
   return children ?? <Outlet />;

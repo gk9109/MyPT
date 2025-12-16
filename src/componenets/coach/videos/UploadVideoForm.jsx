@@ -1,49 +1,43 @@
 import React, { useState } from "react";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { storage, db } from "../../../firebase/config"; 
-import { useAuth } from "../../../firebase/AuthContext";  
+import { storage, db } from "../../../firebase/config";
+import { useAuth } from "../../../firebase/AuthContext";
+import LoaClipLoader from "../../shared/Loader2";
+import { toast } from "react-toastify";
 
-export default function UploadVideoForm() {
-  const { user } = useAuth(); // -> get logged in coach
+export default function UploadVideoForm({ onVideoAdded }) {
+  const { user } = useAuth();
   const [file, setFile] = useState(null);
   const [name, setName] = useState("");
   const [tag, setTag] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
 
-  // Handle file selection
   const handleFileChange = (e) => {
     const selected = e.target.files[0];
     if (selected) setFile(selected);
   };
 
-  // Handle upload
   const handleUpload = async (e) => {
     e.preventDefault();
+
     if (!file || !name.trim()) {
-      setMessage("Please choose a file and enter a name.");
+      toast.error("Please choose a file and enter a video name.");
       return;
     }
     if (!user) {
-      setMessage("You must be logged in as a coach to upload.");
+      toast.error("You must be logged in as a coach to upload.");
       return;
     }
 
     try {
       setLoading(true);
-      setMessage("Uploading...");
-
-      // Create reference in Firebase Storage
+      // ref creation and data fetching from google cloud storage
       const storageRef = ref(storage, `videos/${user.uid}/${file.name}`);
-
-      // Upload the file
       await uploadBytes(storageRef, file);
-
-      // Get download URL
       const downloadURL = await getDownloadURL(storageRef);
 
-      // Save metadata in Firestore
+      // adding related doc to firebase video collection
       const docRef = await addDoc(
         collection(db, "videos", user.uid, "exercises"),
         {
@@ -54,21 +48,33 @@ export default function UploadVideoForm() {
           createdAt: serverTimestamp(),
         }
       );
-
-      setMessage("✅ Uploaded successfully!");
-      console.log("Storage bucket:", storage.bucket);
-      console.log("✅ Uploaded successfully!");
-      console.log("User:", user);
+    
+      // notify parent so list updates instantly
+      if (onVideoAdded) {
+        onVideoAdded({
+          id: docRef.id,
+          coachUid: user.uid,
+          name: name.trim(),
+          tag: tag.trim(),
+          videoUrl: downloadURL,
+          // local fallback; Firestore also has serverTimestamp
+          createdAt: new Date(),
+        });
+      }
+    
+      toast.success("Video uploaded successfully");
       setName("");
       setTag("");
       setFile(null);
     } catch (error) {
-      console.error("Upload failed:", error);
-      setMessage("❌ Upload failed. Check console.");
+      console.log("error:", error);
+      toast.error('There was an error', error);
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  if (loading) return <LoaClipLoader />;
 
   return (
     <form
@@ -92,18 +98,12 @@ export default function UploadVideoForm() {
         onChange={(e) => setTag(e.target.value)}
         className="form-control"
       />
-
+      {/* input */}
       <input type="file" accept="video/*" onChange={handleFileChange} />
 
-      <button
-        type="submit"
-        className="btn btn-primary"
-        disabled={loading}
-      >
-        {loading ? "Uploading..." : "Upload"}
+      <button type="submit" className="btn btn-primary" disabled={loading}>
+        Upload
       </button>
-
-      {message && <small className="text-center mt-2">{message}</small>}
     </form>
   );
 }

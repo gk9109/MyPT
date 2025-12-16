@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 export default function NutritionPlanForm({ initialMeals = [], onSave }) {
   const [meals, setMeals] = useState([
@@ -6,7 +7,6 @@ export default function NutritionPlanForm({ initialMeals = [], onSave }) {
   { title: "Lunch", carbs: "", fats: "", protein: "", calories: "" },
   { title: "Dinner", carbs: "", fats: "", protein: "", calories: "" },
 ]);
-
 
   const handleMealChange = (index, field, value) => {
     const updated = [...meals];
@@ -18,10 +18,15 @@ export default function NutritionPlanForm({ initialMeals = [], onSave }) {
     setMeals([...meals, { title: "", carbs: "", fats: "", protein: "", calories: "" }]);
   };
 
-
   const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave({ meals });
+    try {
+      e.preventDefault();
+      onSave({ meals });
+      toast.success("Saved successfully"); 
+    } catch (error) {
+      toast.error("Something went wrong, try again"); 
+    }
+   
   };
 
   return (
