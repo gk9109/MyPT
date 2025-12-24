@@ -3,7 +3,7 @@ import { subscribeToCoach, unsubscribeFromCoach } from '../../Services/subscript
 import { useAuth } from "../../firebase/AuthContext";
 import { db } from "../../firebase/config";
 import { doc, getDoc } from "firebase/firestore";
-import { SUBS_COLLECTION, subId } from "../../Models/subscriptions";
+import { SUBS_COLLECTION, subId } from "../../Services/subscriptions";
 import { useNavigate } from "react-router-dom";
 
 export default function CoachCard({ coach, mode }) {

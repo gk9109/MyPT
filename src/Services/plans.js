@@ -1,7 +1,7 @@
 // firestore/plans.js
 import { db } from "../firebase/config";
 import { collection, addDoc, getDocs, doc, updateDoc } from "firebase/firestore";
-import { subId } from "../Models/subscriptions";
+import { subId } from "./subscriptions";
 
 export async function addWorkoutPlan(coachUid, clientUid, plan) {
   try {

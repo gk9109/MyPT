@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { db } from "../../firebase/config";
 import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
-import { subId } from "../../Models/subscriptions";
+import { subId } from "../../Services/subscriptions";
 import WorkoutPlanForm from "../../componenets/coach/WorkoutPlanForm";
 import { useAuth } from "../../firebase/AuthContext";
 import WorkoutPlanDisplay from "../../componenets/clients/WorkoutPlanDisplay";

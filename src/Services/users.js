@@ -1,9 +1,40 @@
 // src/Services/users.js
 import { db } from "../firebase/config";
 import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
-import { makeUserProfile } from "../Models/user";
+import { serverTimestamp } from "firebase/firestore";
 
 //this file is for user handling functions
+
+// builds one clean user object for the "users" collection
+export function makeUserProfile({
+  uid,
+  email,
+  role = "client",
+  firstName = "",
+  lastName = "",
+  phone = "",
+  location = "",
+}) {
+  // build a lower-case "first last" value used for search
+  const searchName = `${firstName} ${lastName}`
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+
+  // this is the object that will be saved in Firestore
+  return {
+    uid,
+    role,
+    email,
+    firstName,
+    lastName,
+    searchName,
+    phone,
+    location,
+    createdAt: serverTimestamp(), // Firestore will fill this on the server
+  };
+}
+
 
 //gets a role (string), if role == coach return "coaches", else, return "clients"
 const collectionByRole = (role) =>

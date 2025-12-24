@@ -1,9 +1,14 @@
 import { db } from "../firebase/config";
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "firebase/firestore";
-import { SUBS_COLLECTION, subId } from "../Models/subscriptions";
+
+// Name of the Firestore collection 
+export const SUBS_COLLECTION = "subscriptions";
+// Generate unique docId by combining coachUid + clientUid
+export const subId = (coachUid, clientUid) => `${coachUid}_${clientUid}`;
 
 export async function subscribeToCoach({ coachUid, clientUid }) {
   let searchName = "";
+  
 
   try {
     const ref = doc(db, SUBS_COLLECTION, subId(coachUid, clientUid));

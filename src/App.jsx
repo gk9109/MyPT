@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './pages/Shared/Home';
 import Register from './pages//Shared/Register';
 import Login from './pages//Shared/Login';
-import Profile from './pages/Profile';
 import Layout from './componenets/shared/Layout';
 import ProtectedRoute from './componenets/shared/ProtectedRoute';
 import TraineeNutritionPage from './pages/liad/TraineeNutritionPage';
@@ -22,7 +21,6 @@ import UserList from './pages/admin/UserList'
 import SchedulePage from './pages/Coaches/SchedulePage';
 import ClientProfilePage from './pages/Clients/ClientProfilePage';
 import PasswordReset from './pages/Shared/PasswordReset';
-import ArticlePage from './pages/Clients/ArticlePage';
 import CoachProfilePage from './pages/Coaches/CoachProfilePage';
 
 

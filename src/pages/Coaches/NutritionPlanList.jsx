@@ -1,12 +1,7 @@
 import { useEffect, useState } from "react";
 import { db } from "../../firebase/config";
-import {
-  collection,
-  doc,
-  getDocs,
-  updateDoc,
-} from "firebase/firestore";
-import { subId } from "../../Models/subscriptions";
+import { collection, doc, getDocs, updateDoc } from "firebase/firestore";
+import { subId } from "../../Services/subscriptions";
 import { useAuth } from "../../firebase/AuthContext";
 import NutritionPlanForm from "../../componenets/coach/NutritionPlanForm";
 
