@@ -1,6 +1,20 @@
 import React from 'react'
 import '/src/style/globals.css'
 
+// What this component does:
+// -> Renders the global footer of the application.
+// -> Displays basic contact information, social links, and a short description.
+//
+// Where it's used:
+// -> Included at the bottom of the main layout.
+// -> Appears on all public and authenticated pages.
+//
+// Props:
+// None
+//
+// Notes:
+// -> This is a purely presentational component.
+// -> It does not contain any logic, state, or external data dependencies.
 export default function Footer() {
   return (
     <footer className="bg-dark text-light mt-5 py-4" >

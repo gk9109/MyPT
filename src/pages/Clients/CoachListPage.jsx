@@ -6,10 +6,11 @@ import  Loader  from '../../componenets/shared/Loader'
 import DataGate from '../../componenets/shared/DataGate'
 
 export default function CoachListPage() {
-  const [allCoaches, setAllCoaches] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const [allCoaches, setAllCoaches] = useState([]); // state to store all coaches from firebase collection
+  const [loading, setLoading] = useState(true); 
+  const { user } = useAuth(); // current logged-ib user
 
+  // Happens once on mount, fetching and sorting all coaches to do later displayed in a list on client side
   useEffect(() => {
     const fetchCoaches = async () => {
       try {
@@ -22,21 +23,21 @@ export default function CoachListPage() {
         )
 
         setAllCoaches(ordered)
-      } catch (error) {
+      } catch (error) { // error handling
         console.error("Error fetching client’s coaches:", error)
       } finally {
         setLoading(false);
       }
     }
-
     fetchCoaches()
-    
   }, [user])
 
-  if(loading) return <Loader />
+  // if(loading) return <Loader />
 
   return (
-    <DataGate data={allCoaches} >
+    // DataGate shows a spinner while loading is true,
+    // and only renders this list once the coaches data is ready
+    <DataGate data={allCoaches} loading={loading}> 
       <div className="d-flex flex-column align-items-center gap-3">
         {/* If no coaches are found, display a fallback message */}
         {allCoaches.length === 0 ? (

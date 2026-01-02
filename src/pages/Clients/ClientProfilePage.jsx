@@ -65,10 +65,10 @@ export default function ClientProfilePage() {
     }
   }
 
-    const handleMealSavedToBank = (meal) => {
-      // add the new meal to the existing bank list so UI updates instantly
-      setCustomMeals((prev) => [...prev, meal]);
-    };
+  const handleMealSavedToBank = (meal) => {
+    // add the new meal to the existing bank list so UI updates instantly
+    setCustomMeals((prev) => [...prev, meal]);
+  };
 
 
   return (

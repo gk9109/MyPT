@@ -2,32 +2,55 @@ import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../firebase/AuthContext";
 
+// What this component does:
+// -> Displays a single client as a card for the coach.
+// -> Shows basic client info (name, status, contact details, dates).
+// -> Allows the coach to:
+//    - select a client and open their profile
+//    - start a chat with the client
+//
+// Where it's used:
+// -> In coach-facing pages that list all assigned clients.
+//
+// Props:
+// client (object)
+// -> Client data fetched from Firestore.
+// -> Expected to include fields like:
+//    { uid / clientUid, firstName, lastName, searchName, email, phone, status, createdAt, updatedAt }
+//
+// Data flow & state usage:
+// -> Selected client is stored in global AuthContext
+// -> Also persisted in localStorage to survive page refreshes
 export default function ClientCard({ client }) {
   const navigate = useNavigate();
   const { setSelectedClient, user } = useAuth(); 
-
+  // Guard: component should not render without valid client data
   if (!client) return "no clients";
   console.log(client);
 
+  // Select client:
+  // -> Save client in global context for easy access across pages
+  // -> Persist in localStorage so refresh doesn't lose selection
+  // -> Navigate to client profile page
   const onSelect = () => {
-    // adding selected client to global context for easy access
     setSelectedClient(client);
-    // storing client in local storage to avoid refresh issues
     localStorage.setItem("selectedClient", JSON.stringify(client));
     navigate("/client-profile");
   }
 
+  // Open chat with client:
+  // -> Same selection logic as onSelect
+  // -> Build subscriptionId using pattern: coachUid_clientUid
+  // -> Navigate to chat route
   const onChat = () => {
-    // adding selected client to global context for easy access
     setSelectedClient(client);
-    // storing client in local storage to avoid refresh issues
     localStorage.setItem("selectedClient", JSON.stringify(client));
     // subscription ID pattern: coachUid_clientUid
     const subscriptionId = `${user.uid}_${clientUid}`;
     navigate(`/chat/${subscriptionId}`);
   };
 
-  // destructuring
+  // Destructure client fields for easier use in JSX
   const {
     searchName,
     firstName,
@@ -41,10 +64,13 @@ export default function ClientCard({ client }) {
     updatedAt,
   } = client;
 
-  const name =
-    searchName || `${firstName || ""} ${lastName || ""}`.trim() || "(Unnamed)";
+  // Resolve a display-friendly name:
+  // -> Prefer normalized searchName if exists
+  // -> Otherwise combine first + last name
+  // -> Fallback to "(Unnamed)" if nothing exists
+  const name = searchName || `${firstName || ""} ${lastName || ""}`.trim() || "(Unnamed)";
 
-  // format Firestore timestamp -> readable date
+  // Convert Firestore Timestamp or Date into readable string
   const formatDate = (ts) => {
     if (!ts) return "";
     const date = ts.seconds ? new Date(ts.seconds * 1000) : ts;

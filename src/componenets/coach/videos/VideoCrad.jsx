@@ -5,13 +5,49 @@ import { db, storage } from "../../../firebase/config";
 import { useAuth } from "../../../firebase/AuthContext";
 import { toast } from "react-toastify";
 
+// What this component does:
+// -> Displays a single exercise/demo video in a card layout.
+// -> Allows coaches to edit video metadata (name, tag).
+// -> Allows coaches to delete videos (both Storage file + Firestore document).
+// -> In client mode, the card is read-only (no edit/delete actions).
+//
+// Where it's used:
+// -> Coach-side video management pages.
+// -> Client-side workout views (read-only mode).
+//
+// Props:
+// video (object)
+// -> Video metadata object from Firestore.
+// -> Expected fields: { id, name, tag?, videoUrl, createdAt }
+//
+// coachUid (string)
+// -> UID of the coach who owns the video.
+// -> Used to locate the correct Storage path and Firestore document.
+//
+// onDelete (function, optional)
+// -> Callback fired after a successful delete.
+// -> Receives the deleted video id.
+// -> Allows parent to update UI without refetching.
+//
+// mode (string, default = "coach")
+// -> "coach": edit & delete controls enabled.
+// -> "client": read-only view (no mutations allowed).
+//
+// Notes:
+// -> This component handles its own edit/delete logic.
+// -> Firestore and Storage are kept in sync when deleting.
 export default function VideoCard({ video, coachUid, onDelete, mode = "coach" }) {
   const { user } = useAuth();
+  // Local UI state
   const [editing, setEditing] = useState(false);
   const [newName, setNewName] = useState(video.name);
   const [newTag, setNewTag] = useState(video.tag || "");
   const [loading, setLoading] = useState(false);
 
+  // Normalize createdAt:
+  // -> Firestore Timestamp (has toDate())
+  // -> or plain JS Date (local fallback)
+  // -> Convert both into a readable string
   const createdAt = video.createdAt;
   let dateText = "N/A";
 
@@ -23,6 +59,9 @@ export default function VideoCard({ video, coachUid, onDelete, mode = "coach" })
     dateText = createdAt.toLocaleDateString();
   }
 
+  // Save edited metadata (coach only):
+  // -> Updates name/tag in Firestore
+  // -> Does NOT touch the video file itself
   const handleSave = async () => {
     if (!user || mode === "client") return;
     try {
@@ -45,6 +84,11 @@ export default function VideoCard({ video, coachUid, onDelete, mode = "coach" })
     }
   };
 
+  // Delete video (coach only):
+  // -> Confirm action with user
+  // -> Delete file from Firebase Storage
+  // -> Delete corresponding Firestore document
+  // -> Notify parent component
   const handleDelete = async () => {
     if (!user || mode === "client") return;
 
@@ -53,15 +97,15 @@ export default function VideoCard({ video, coachUid, onDelete, mode = "coach" })
 
     try {
       setLoading(true);
-
+      // Extract file name from download URL
       const fileName = video.videoUrl.split("%2F").pop().split("?")[0];
+      // Delete video file from Storage
       const storageRef = ref(storage, `videos/${coachUid}/${fileName}`);
-
       await deleteObject(storageRef);
-
+      // Delete Firestore document
       const videoRef = doc(db, "videos", coachUid, "exercises", video.id);
       await deleteDoc(videoRef);
-
+      // Inform parent so UI updates instantly
       if (onDelete) onDelete(video.id);
 
       toast.success("Video deleted");
@@ -84,6 +128,7 @@ export default function VideoCard({ video, coachUid, onDelete, mode = "coach" })
 
       {editing ? (
         <>
+          {/* Edit mode inputs */}
           <input
             type="text"
             value={newName}
@@ -116,12 +161,13 @@ export default function VideoCard({ video, coachUid, onDelete, mode = "coach" })
         </>
       ) : (
         <>
+          {/* View mode */}
           <h5>{video.name}</h5>
           {video.tag && <p className="text-muted mb-1">Tag: {video.tag}</p>}
           <small className="text-secondary">
             Uploaded:{ dateText }
           </small>
-
+          {/* Coach-only actions */}
           {mode === "coach" && (
             <div className="mt-2 d-flex gap-2">
               <button

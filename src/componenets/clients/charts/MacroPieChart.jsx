@@ -1,27 +1,49 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 
+// What this component does:
+  // -> Displays a Pie Chart of today's macro breakdown (Protein / Carbs / Fat).
+  // -> Combines two sources of meals:
+  //    1) todayMeals  = meals already saved in Firestore for today
+  //    2) liveMeals   = meals the user added in the UI but hasn't saved yet
+  // -> The chart always reflects what the user currently sees (saved + pending).
+  //
+  // Where it's used:
+  // -> Inside your progress charts section on the client profile page.
+  //
+  // Props:
+  // todayMeals (array, default = [])
+  // -> Meals fetched from Firestore for today's progress document.
+  // -> Each meal is expected to have numeric-ish fields: protein, carbs, fat.
+  //
+  // liveMeals (array, default = [])
+  // -> "Temporary" meals stored in React state while the user is editing.
+  // -> This makes the chart reactive before the user hits Save.
+  //
+  // Why there are many "|| 0":
+  // -> Meals may have missing macros (undefined/null/empty string).
+  // -> Using "|| 0" prevents NaN and keeps totals stable.
 export default function MacroPieChart({ todayMeals = [], liveMeals = [] }) {
-  // Base data -> meals already saved in Firestore for today
-  // Overlay     -> meals currently in "Meals To Be Added" (state)
-  // What the user actually sees -> base + overlay
+  // Merge Firestore meals + UI pending meals
+  // -> If the user has live meals, show them on top of saved ones
+  // -> Otherwise, show only what's saved in Firestore
   const finalMeals =
     liveMeals && liveMeals.length > 0
       ? [...todayMeals, ...liveMeals] // collection + state together
       : todayMeals;                   // only collection when there is nothing pending
 
-  // Sum up macros from all meals
-  const protein =
-    finalMeals?.reduce((sum, meal) => sum + Number(meal.protein || 0), 0) || 0;
-  const carbs =
-    finalMeals?.reduce((sum, meal) => sum + Number(meal.carbs || 0), 0) || 0;
-  const fat =
-    finalMeals?.reduce((sum, meal) => sum + Number(meal.fat || 0), 0) || 0;
+  // Reduce = "turn an array into one value" (here: sum of macros)
+  // Number(...) converts strings like "12" into 12 to ensure numeric addition
+  const protein = finalMeals?.reduce((sum, meal) => sum + Number(meal.protein || 0), 0) || 0;
+  const carbs = finalMeals?.reduce((sum, meal) => sum + Number(meal.carbs || 0), 0) || 0;
+  const fat = finalMeals?.reduce((sum, meal) => sum + Number(meal.fat || 0), 0) || 0;
 
   const total = protein + carbs + fat;
   const empty = total === 0;
 
-  // When empty -> just show 3 equal grey slices with “0%”
-  // When not empty -> show real percentages based on totals
+  // Chart input:
+  // -> Recharts Pie needs positive values to draw slices.
+  // -> If total is 0, we use 1/1/1 so it still renders a neutral pie,
+  //    while labels show "0%" to reflect reality.
   const data = empty
     ? [
         { name: "Protein (0%)", value: 1 },

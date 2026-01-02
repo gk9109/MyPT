@@ -4,7 +4,6 @@ import Register from './pages//Shared/Register';
 import Login from './pages//Shared/Login';
 import Layout from './componenets/shared/Layout';
 import ProtectedRoute from './componenets/shared/ProtectedRoute';
-import TraineeNutritionPage from './pages/liad/TraineeNutritionPage';
 import NutritionPlan from './pages/Coaches/NutritionPlan'
 import SearchPage from './pages/Clients/SearchPage';
 import GuestRoute from './componenets/shared/GuestRoute';
@@ -63,7 +62,6 @@ function App() {
 
           {/* clients only */}
           <Route element={<ProtectedRoute allow="client" />}>
-            <Route path="/diet" element={<TraineeNutritionPage />} />
             <Route path='/search' element={<SearchPage/>} />
             <Route path='/coach-list' element={<CoachListPage/>} />
             <Route path='/plans' element={<CoachSetUp/>} />

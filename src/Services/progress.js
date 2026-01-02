@@ -106,28 +106,34 @@ export async function dailyPieData(uid, dateString) {
     }
 }   
 
-// Aggregate total sets/reps per exercise across all progress docs
+// getWorkoutTotals
+// -> goes over all progress docs of a client
+// -> sums total sets and total reps for each exercise name
+// -> returns an array like: [{ name: "Bench Press", totalSets: 12, totalReps: 120 }, ...]
 export async function getWorkoutTotals(uid) {
   try {
+    // creating ref and fetching docs
     const progressRef = collection(db, "clients", uid, "progress");
     const snap = await getDocs(progressRef);
 
-    const totals = {}; // { bench press: { totalSets, totalReps } }
+    const totals = {}; // accumulator object: { "Bench Press": { name: "Bench Press", totalSets: 0, totalReps: 0 }, ... }
 
     snap.forEach((docSnap) => {
-      const data = docSnap.data();
-      const workouts = Array.isArray(data.workouts) ? data.workouts : [];
+      const data = docSnap.data(); // data extruction
+      // make sure workouts an array, otherwise an empty array
+      const workouts = Array.isArray(data.workouts) ? data.workouts : []; 
 
       workouts.forEach((w) => {
+        // each workout has an exercises array
         (w.exercises || []).forEach((ex) => {
 
-          const name = ex.name;
-          if (!name) return;
-
+          const name = ex.name; 
+          if (!name) return; // skip exercises without a name
+          // convert sets / reps to numbers (avoid undefined / string issues)
           const setsDone = Number(ex.completedSets || 0);
           const repsPerSet = Number(ex.reps || 0);
           const repsDone = setsDone * repsPerSet;
-
+          // if this is the first time we see this exercise name -> init it 
           if (!totals[name]) {
             totals[name] = {
               name,
@@ -135,13 +141,13 @@ export async function getWorkoutTotals(uid) {
               totalReps: 0,
             };
           }
-
+          // add this workout's sets/reps to the totals
           totals[name].totalSets += setsDone;
           totals[name].totalReps += repsDone;
         });
       });
     });
-
+    // convert the totals object into an array for the chart
     return Object.values(totals);
   } catch (error) {
     console.log("error getting workout totals:", error);

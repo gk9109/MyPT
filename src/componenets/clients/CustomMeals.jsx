@@ -2,13 +2,21 @@ import { addMealToBank } from '../../Services/mealBank';
 import { useAuth } from "../../firebase/AuthContext";
 import { toast } from "react-toastify";
 
-export default function CustomMeals({ meals, onMealChange, onAddMeal, onRemoveMeal, onMealSaved }) {
+// CustomMeals
+// -> part of the client profile page.
+// -> lets the client define custom meals they can reuse later in progress tracking.
 
-  const { user } = useAuth();
+// props:
+  // meals        - array of custom meal objects managed in ClientProfilePage
+  // onMealChange - called when the user edits a field of a specific meal
+  // onAddMeal    - adds a new empty meal block
+  // onRemoveMeal - removes a meal by index
+  // onMealSaved  - optional; called after saving to Firestore so parent can update its local meal bank
+export default function CustomMeals({ meals, onMealChange, onAddMeal, onRemoveMeal, onMealSaved }) {
+  const { user } = useAuth(); // current logged-in user
   const uid = user.uid;
 
-
-  // this function saves a single meal (by index) into the mealBank collection
+  // save a single meal to the mealBank collection for this user
   const saveMealToBank = async (meal) => {
     try {
       // basic validation -> no empty names allowed
@@ -16,7 +24,6 @@ export default function CustomMeals({ meals, onMealChange, onAddMeal, onRemoveMe
         toast.error("Please make sure the meal has a name and data.");
         return;
       }
-
       // calling our firestore function that creates the subcollection if needed
       await addMealToBank(uid, meal);
       toast.success("Meal saved successfully");
@@ -31,7 +38,7 @@ export default function CustomMeals({ meals, onMealChange, onAddMeal, onRemoveMe
         onMealSaved(mealForState);
       }
 
-    } catch (err) {
+    } catch (err) { // error handling 
       console.log("error saving meal:", err);
       toast.error("Something went wrong, try again");
     }
@@ -103,7 +110,7 @@ export default function CustomMeals({ meals, onMealChange, onAddMeal, onRemoveMe
             <button
               type="button"
               className="btn btn-success btn-sm"
-              onClick={() => saveMealToBank(meal)}   // <-- correctly called
+              onClick={() => saveMealToBank(meal)}
             >
               Save to Bank
             </button>

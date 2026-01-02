@@ -6,27 +6,35 @@ import { doc, getDoc } from "firebase/firestore";
 import { SUBS_COLLECTION, subId } from "../../Services/subscriptions";
 import { useNavigate } from "react-router-dom";
 
-export default function CoachCard({ coach, mode }) {
-  const { user, setSelectedCoach } = useAuth();
-  const [isSubscribed, setIsSubscribed] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+// CoachCard is rendered in the client coach list.
+// This componenet will be associated with each coach in the system and displayed with their details,
+// as clients browse coaches
 
+export default function CoachCard({ coach, mode }) {
+  // user -> current logged-in user, selectedCoach -> reference to the coach the client selected 
+  const { user, setSelectedCoach } = useAuth(); 
+  const [isSubscribed, setIsSubscribed] = useState(false); // state to controll subscriptions
+  const [loading, setLoading] = useState(true); // state for loading
+  const navigate = useNavigate(); // hook to navigate to other pages in code
+
+  // On coach selection save data in state and localStorage for later use
   const onSelect = () => {
     setSelectedCoach(coach);
     localStorage.setItem("selectedCoach", JSON.stringify(coach)); // persist coach
-    navigate("/plans")
+    navigate("/plans") // navigate to clients plans made by selected coach
   };
 
+  // On coach selection save data in state and localStorage for later use
   const onChat = () => {
     setSelectedCoach(coach);
     localStorage.setItem("selectedCoach", JSON.stringify(coach)); // persist coach
-    const subscriptionId = `${coach.uid || coach.coachUid}_${user.uid}`;
-    navigate(`/chat/${subscriptionId}`);
+    const subscriptionId = `${coach.uid || coach.coachUid}_${user.uid}`; // subId for mutual chats
+    navigate(`/chat/${subscriptionId}`); // navigation to chat
   };
 
   if (!coach) return <p>no coaches in list</p>;
 
+  // pull common fields out of the coach object (with safe defaults)
   const {
     firstName = "",
     lastName = "",
@@ -42,15 +50,16 @@ export default function CoachCard({ coach, mode }) {
   useEffect(() => {
     const checkSub = async () => {
       if (!user?.uid || !uid) return setLoading(false);
-      try {
-        const ref = doc(db, SUBS_COLLECTION, subId(uid, user.uid));
+      
+      try { // creating reference and fetching doc
+        const ref = doc(db, SUBS_COLLECTION, subId(uid, user.uid));  
         const snap = await getDoc(ref);
         if (snap.exists() && snap.data().status === "active") {
           setIsSubscribed(true);
         } else {
           setIsSubscribed(false);
         }
-      } catch (err) {
+      } catch (err) { // logging error in console
         console.error("Error checking subscription:", err);
         setIsSubscribed(false);
       }
@@ -59,13 +68,12 @@ export default function CoachCard({ coach, mode }) {
     checkSub();
   }, [user?.uid, uid]);
 
-  // handle subscribe/unsubscribe
-  // inside CoachCard
+  // updating subscription doc based on subscriptions current status -> active/cancled
   const toggleSubscription = async () => {
     if (!user?.uid || !uid) return;
-    console.log("coachUid:", uid, "clientUid:", user?.uid, "user:", user);
+    console.log("coachUid:", uid, "clientUid:", user?.uid, "user:", user); // check log
 
-    try {
+    try {  
       if (isSubscribed) {
         await unsubscribeFromCoach({ coachUid: uid, clientUid: user.uid });
         setIsSubscribed(false);
@@ -80,22 +88,24 @@ export default function CoachCard({ coach, mode }) {
     }
   };
 
+  // dont get what this is for 
   // format createdAt
   let created = "";
-  try {
-    const d =
-      createdAt?.seconds
-        ? new Date(createdAt.seconds * 1000)
-        : createdAt instanceof Date
-        ? createdAt
-        : createdAt
-        ? new Date(createdAt)
-        : null;
-    created = d ? d.toLocaleDateString() : "";
-  } catch (error) {
-    console.log(error);
+  if (createdAt) {
+    try {
+      // Firestore Timestamp has toDate(), Date/string does not
+      const date =
+        typeof createdAt.toDate === "function"
+          ? createdAt.toDate()
+          : new Date(createdAt);
+
+      created = date.toLocaleDateString();
+    } catch (error) {
+        console.log(error);
+    }
   }
 
+  // full name + initials for the avatar circle 
   const name = `${firstName} ${lastName}`.trim() || "(Unnamed)";
   const initials = (firstName?.[0] || "").toUpperCase() + (lastName?.[0] || "").toUpperCase();
 

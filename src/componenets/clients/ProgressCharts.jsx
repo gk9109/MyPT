@@ -5,32 +5,32 @@ import Loader from "../shared/Loader";
 import WeightChart from "./charts/WeightChart";
 import WorkoutTotalsChart from "./charts/WorkoutTotalsChart";
 import MacroPieChart from "./charts/MacroPieChart";
-
-// new imports
 import { useAuth } from "../../firebase/AuthContext";
 import { getWorkoutTotals } from "../../Services/progress";
 
-export default function ProgressCharts({
-  data,
-  loading,
-  onFilterChange,
-  liveMeals,
-  todayMeals,
-}) {
-  // current logged-in user
-  const { user } = useAuth();
+// ProgressCharts
+// -> groups all progress visualizations for the client:
+//    weight over time, macro pie chart, and workout totals.
 
+// Props:
+// data         - array of daily progress docs (weight + meals) from Firestore
+// loading      - true while the main progress data is being fetched
+// liveMeals    - meals currently in state (not yet saved to Firestore)
+// todayMeals   - meals loaded from today's saved progress doc
+export default function ProgressCharts({ data, loading, liveMeals, todayMeals }) {
+  const { user } = useAuth(); // current logged-in user
   // local state for workout totals chart
   const [workoutTotals, setWorkoutTotals] = useState([]);
   const [workoutLoading, setWorkoutLoading] = useState(true);
 
-  // fetch workout totals once we know the user
+  // fetch aggregated workout totals for this user
+  // runs when the user is known (after AuthContext loads)
   useEffect(() => {
     if (!user) return;
 
-    let cancelled = false;
+    let cancelled = false;  // safety flag if component unmounts
     setWorkoutLoading(true);
-
+    // getWorkoutTotals(uid) -> total sets/reps per exercise from all progress docs
     getWorkoutTotals(user.uid)
       .then((totals) => {
         if (!cancelled) {
@@ -44,6 +44,7 @@ export default function ProgressCharts({
         if (!cancelled) setWorkoutLoading(false);
       });
 
+    // cleanup: mark as cancelled so we don't call setState on unmounted component
     return () => {
       cancelled = true;
     };
@@ -51,12 +52,12 @@ export default function ProgressCharts({
 
   console.log("progress chart data:", data);
 
-  // overall progress (weight/meals) still uses the existing loading flag
+   // while the main progress (weight/meals) is loading -> show loader
   if (loading) {
     return <Loader />;
   }
 
-  // if there are no progress docs at all, show the animation
+  // if there are no progress docs at all -> show animation + message
   if (!data || data.length === 0) {
     return (
       <div className="d-flex flex-column justify-content-center align-items-center">
@@ -75,29 +76,19 @@ export default function ProgressCharts({
     <div id="progress-charts" className="progress-chsrt mt-4">
       <div className="d-flex col">
         <h4>Progress Overview</h4>
-        {/* filters are still available if you want them later */}
-        {/* <select
-          className="form-select form-select-sm"
-          onChange={(e) => onFilterChange(e.target.value.toLowerCase())}
-        >
-          <option value="last week">Last week</option>
-          <option value="last month">Last month</option>
-          <option value="last 6 months">Last 6 months</option>
-          <option value="last year">Last year</option>
-          <option value="all">All time</option>
-        </select> */}
       </div>
 
       <div className="chart-container mb-5">
-        {/* weight over time */}
+        {/* line chart -> shows weight change over time using all progress docs */}
         <WeightChart data={data} />
 
-        {/* meals pie chart – uses today's doc (from progress.js) +
-           liveMeals that are still in state and not saved yet */}
+        {/* macro pie chart -> combines today's saved meals (todayMeals)
+          with liveMeals from the form that are not saved yet */}
         <MacroPieChart todayMeals={todayMeals} liveMeals={liveMeals} />
 
-        {/* workout volume per exercise (total sets / reps from all docs) */}
+        {/* workout volume per exercise (sum of sets/reps from all workout docs) */}
         {workoutLoading ? (
+          // simple text loader for the workout chart (can be replaced later with Loader/Lottie)
           <p className="text-muted mt-3">Loading workout stats...</p>
         ) : (
           <WorkoutTotalsChart data={workoutTotals} />
