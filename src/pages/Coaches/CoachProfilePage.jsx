@@ -5,11 +5,27 @@ import { db } from "../../firebase/config";
 import { useAuth } from "../../firebase/AuthContext";
 import { toast } from "react-toastify";
 
+// CoachProfilePage
+// What this component does:
+// -> Displays and edits the logged-in coach's profile.
+// -> Loads profile data from Firestore.
+// -> Allows updating profile fields (name, email, phone, location).
+// -> Syncs email changes with Firebase Auth and Firestore.
+//
+// Where it's used:
+// -> Coach routes/pages (profile settings).
+//
+// Notes:
+// -> Email is stored in BOTH Firebase Auth and Firestore.
+// -> updateEmail updates Auth, updateDoc updates Firestore.
+// -> searchName is updated for search/filter functionality.
 export default function CoachProfilePage() {
-  const { user } = useAuth(); // -> logged in coach from AuthContext
+  // Logged-in coach from AuthContext
+  const { user } = useAuth();
+  // Page-level loading flag
   const [loading, setLoading] = useState(true);
 
-  // local state for the form fields
+  // Local form state (controlled inputs)
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -18,17 +34,23 @@ export default function CoachProfilePage() {
     location: ""
   });
 
+  // Fetch coach profile data on mount
   useEffect(() => {
     const fetchCoach = async () => {
       try {
-        // reference to the coach document
+        // doc(db, "coaches", uid)
+        // -> Reference to this coach's Firestore document
         const ref = doc(db, "coaches", user.uid);
+
+        // getDoc(docRef)
+        // -> Fetches the coach document
+        // -> Returns: DocumentSnapshot
         const snap = await getDoc(ref);
 
         if (snap.exists()) {
           const data = snap.data();
 
-          // fill the form with existing data
+          // Populate form with existing Firestore data
           setForm({
             firstName: data.firstName || "",
             lastName: data.lastName || "",
@@ -37,32 +59,35 @@ export default function CoachProfilePage() {
             email: data.email || user.email
           });
         }
-
         setLoading(false);
       } catch (err) {
         console.log(err);
         setLoading(false);
       }
     };
-
     fetchCoach();
   }, [user.uid, user.email]);
 
-  // update form fields as the user types
+  // Update form state as the user types
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // Save profile changes
   const handleSave = async () => {
     try {
       const ref = doc(db, "coaches", user.uid);
 
-      // if email changed, update in Firebase Auth
+      // If email was changed, update Firebase Auth as well
       if (form.email !== user.email) {
+        // updateEmail(user, newEmail)
+        // -> Updates the email in Firebase Auth
+        // -> Returns: Promise<void>
         await updateEmail(user, form.email);
       }
 
-      // update Firestore fields
+      // updateDoc(docRef, data)
+      // -> Updates specific fields in Firestore
       await updateDoc(ref, {
         firstName: form.firstName,
         lastName: form.lastName,
@@ -79,6 +104,7 @@ export default function CoachProfilePage() {
     }
   };
 
+  // Loading state
   if (loading) return <p>Loading...</p>;
 
   return (

@@ -3,19 +3,34 @@ import { auth } from "../../firebase/config";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { Link } from "react-router-dom";
 
+// PasswordReset
+// What this component does:
+// -> Allows users to request a password reset email.
+// -> Uses Firebase Authentication to send a reset link.
+// -> Displays success/error messages during the process.
+//
+// Where it's used:
+// -> Public route (/passwordreset).
+// -> Accessed from the Login page.
+//
+// Notes:
+// -> Firebase must have password reset emails enabled:
+//    Firebase Console -> Authentication -> Templates -> Password reset
 export default function PasswordReset() {
+  // Controlled form state
   const [email, setEmail] = useState("");
+  // UI feedback state
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-    // handles the submision of email for password reset
+    // Handle password reset form submission
     const handleReset = async (e) => {
         e.preventDefault();
         setError("");
         setMessage("");
         
-        // checking the user entered an email
+        // Basic validation: email must be provided
         if (!email.trim()) {
           setError("Please enter your email.");
           return;
@@ -24,10 +39,11 @@ export default function PasswordReset() {
         setLoading(true);
       
         try {
-            // using firebaes func to sened a password reset email,
-            // gotta make sure its allowed throgh firebase console
-            // firebase -> authentication -> templates -> password reset
+          // sendPasswordResetEmail(auth, email)
+          // -> Firebase Auth function that sends a reset link to the email.
+          // -> Returns: Promise<void>
           await sendPasswordResetEmail(auth, email);
+          // Generic success message (does not reveal if email exists)
           setMessage("If this email is registered, a reset link has been sent.");
         } catch (err) {
           setError("Failed to send reset email.");
@@ -51,7 +67,7 @@ export default function PasswordReset() {
             onChange={(e) => setEmail(e.target.value)}
           />
         </div>
-
+        {/* Feedback messages */}
         {error && <p className="text-danger">{error}</p>}
         {message && <p className="text-success">{message}</p>}
 

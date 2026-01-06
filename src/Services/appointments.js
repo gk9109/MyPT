@@ -1,13 +1,21 @@
 import { db } from "../firebase/config";
 import { addDoc, collection, doc, getDocs, updateDoc, deleteDoc } from "firebase/firestore"
 
-// Get all appoinmets for coach
+// SERVICES: appointments.js
+// -> Firestore helper functions for coach appointments.
+// -> Keeps CRUD logic out of JSX components.
+// -> Collection path used here: coaches/{coachUid}/appointments
+
+// getAppointments
+// -> Gets all appointment docs for a specific coach.
+// -> Reads from: coaches/{coachUid}/appointments
+// -> Returns: array of objects like [{ docId, ...data }, ...]
 export async function getAppointments(coachUid){
     try {
         // Creating ref and fetching docs
         const colRef = collection(db, "coaches", coachUid, "appointments");
         const snap = await getDocs(colRef);
-        // Returning array with docId + data
+        // Returning array with docId + doc data
         return snap.docs.map((d) => ({
             docId: d.id,
             ...d.data()
@@ -19,7 +27,13 @@ export async function getAppointments(coachUid){
     }
 }
 
-// Add appointment
+// addAppointment
+// -> Adds a new appointment doc for a coach.
+// -> Writes to: coaches/{coachUid}/appointments
+// -> Params:
+//    -> coachUid: coach user uid (Firestore doc id under "coaches")
+//    -> data: appointment object to save (title, start, end, etc.)
+// -> Returns: the new appointment docId (so UI can update state without refetch)
 export async function addAppointment(coachUid, data){
     try {
         const colRef = collection(db, "coaches", coachUid, "appointments");
@@ -31,7 +45,12 @@ export async function addAppointment(coachUid, data){
     }
 }
 
-// Update appointment
+// updateAppointment
+// -> Updates an existing appointment doc.
+// -> Writes to: coaches/{coachUid}/appointments/{docId}
+// -> Params:
+//    -> docId: the appointment document id
+//    -> data: fields to update (partial object)
 export async function updateAppointment(coachUid, docId, data){
     try {
         const docRef = doc(db, "coaches", coachUid, "appointments", docId);
@@ -42,7 +61,9 @@ export async function updateAppointment(coachUid, docId, data){
     }
 }
 
-// Delete appointment
+// deleteAppointment
+// -> Deletes an appointment doc.
+// -> Deletes: coaches/{coachUid}/appointments/{docId}
 export async function deleteAppointment(coachUid, docId){
     try {
         const docRef = doc(db, "coaches", coachUid, "appointments", docId);

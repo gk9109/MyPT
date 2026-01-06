@@ -1,27 +1,43 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../firebase/AuthContext";
 
-// Role-based route guard
-// - Blocks access if user is not logged in
-// - Optionally checks user.role against the required role
-// - Redirects to /login (if not logged in) or /profile (if role mismatch)
-
+// ProtectedRoute
+// What this component does:
+// -> Acts as a route guard for protected pages.
+// -> Blocks access if the user is not logged in.
+// -> Optionally restricts access based on user role.
+// -> Redirects users to the correct page if access is denied.
+//
+// Where it's used:
+// -> Wrapped around protected routes in the router configuration.
+// -> Used for role-based access (admin / coach / client).
+//
+// Props:
+// allow (string | undefined)
+// -> Optional role required to access the route (e.g. "admin", "coach", "client").
+//
+// children (ReactNode)
+// -> Optional content to render instead of <Outlet />.
+//
+// Notes:
+// -> Uses Firebase Auth state from AuthContext.
+// -> Uses react-router's <Navigate /> for redirects.
+// -> Supports both nested routes (<Outlet />) and direct children rendering.
 export default function ProtectedRoute({ allow, children }) {
   const { user, loading } = useAuth();
-  // The useLocation hook in React is part of the react-router-dom library and provides
-  // access to the current location object.
-  // This object represents the current URL and contains various properties related to it.
+  // -> Gives the current route info (current URL/location object).
+  // -> We save it so we can remember where the user tried to go before login.
   const loc = useLocation();
 
-  // Don’t render until Firebase finishes checking auth state
+  // Wait until Firebase finishes resolving auth state
   if (loading) return null;
 
-  // If no user -> send to login
-  // "replace" prevents the blocked page from staying in browser history
-  // "state={{ from: loc }}" remembers the page user wanted -> can redirect after login
+  // If user is not logged in -> redirect to login
+  // "replace" avoids keeping the blocked page in browser history
+  // "state.from" remembers the original page for post-login redirect
   if (!user) return <Navigate to="/login" replace state={{ from: loc }} />;
 
-  // If a role is required -> check it
+  // If a role restriction exists -> validate user role
   const role = user.role?.toLowerCase();
   console.log("ProtectedRoute role:", role, "allow:", allow);
   if (allow && role !== allow.toLowerCase()) {

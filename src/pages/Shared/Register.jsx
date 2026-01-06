@@ -4,15 +4,29 @@ import { createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { createUserProfile } from "../../Services/users";
 
+// Register
+// What this component does:
+// -> Handles new user registration (client or coach).
+// -> Creates a Firebase Auth user using email/password.
+// -> Saves additional profile data in Firestore.
+// -> Cleans up Auth user if Firestore write fails.
+//
+// Where it's used:
+// -> Public route (/register).
+//
+// Notes:
+// -> Firebase Auth handles authentication only.
+// -> Firestore stores user profile + role-specific data.
+// -> Orphan Auth users are prevented by deleting on Firestore failure.
 export default function Register() {
-  // role starts as "client" so the dropdown has a default
+  // Selected role (default is "client" so dropdown has an initial value)
   const [role, setRole] = useState("client");
-  // used to show any registration errors to the user
+  // Used to display validation or Firebase errors to the user
   const [error, setError] = useState("");
-  // used to redirect the user after successful registration
+  // Used to redirect the user after successful registration
   const navigate = useNavigate();
 
-  // using refs because the inputs are uncontrolled (simpler than controlled state)
+  // Uncontrolled input refs (simpler than controlled inputs for this form)
   const firstNameRef = useRef();
   const lastNameRef = useRef();
   const emailRef = useRef();
@@ -20,18 +34,19 @@ export default function Register() {
   const phoneRef = useRef();
   const locationRef = useRef();
 
-  // simple regex that checks basic email structure
+  // Basic email validation helper
   function isValidEmail(email) {
     const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    // test -> returns true/false depending on whether the email matches the pattern
+    // test -> returns true or false based on the regex match
     return pattern.test(email);
   }
 
+  // Handle registration form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    // reading input values directly from refs
+    // Read and normalize input values
     const firstName = firstNameRef.current.value.trim();
     const lastName = lastNameRef.current.value.trim();
     const email = emailRef.current.value.trim();
@@ -39,47 +54,51 @@ export default function Register() {
     const phone = phoneRef.current.value.trim();
     const location = locationRef.current.value.trim();
 
-    // making sure nothing is empty
+    // Validate required fields
     if (!firstName || !lastName || !email || !password || !phone || !location || !role) {
       setError("All fields are required");
       return;
     }
 
-    // basic email validation before calling Firebase
+    // Validate email format before calling Firebase
     if (!isValidEmail(email)) {
       setError("Please enter a valid email address.");
       return;
     }
 
     try {
-      // creates a new Firebase Auth user (email + password)
+      // createUserWithEmailAndPassword(auth, email, password)
+      // -> Creates a new Firebase Auth user
+      // -> Returns: UserCredential
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       const uid = cred.user.uid;
 
       try {
-        // saving additional user details inside Firestore under users/{uid}
-        // so Auth handles login, and Firestore stores profile data
+        // createUserProfile(profileData)
+        // -> Service function that saves user data in Firestore
+        // -> Keeps Auth (login) and Firestore (profile) separ
         await createUserProfile({
           uid,
           email,
-          role,        // stored so the system knows if it's a coach or a client
+          role, // determines client vs coach behavior throughout the app
           firstName,
           lastName,
           phone,
           location,
         });
 
-        // after registration and saving profile -> move user to profile page
+        // Registration completed successfully
         navigate("/profile");
 
       } catch (e) {
-        // if Firestore write fails, delete the newly created Auth user
-        // prevents "orphan" Auth accounts with no profile
+        // If Firestore write fails:
+        // -> Delete the newly created Auth user
+        // -> Prevents orphan Auth accounts without profile data
         await deleteUser(cred.user);
         throw e;
       }
     } catch (err) {
-      // Firebase gives a specific error when email already exists
+      // Firebase-specific error handling
       if (err.code === "auth/email-already-in-use") {
         setError("Email already in use. Try logging in.");
       } else {
@@ -95,7 +114,7 @@ export default function Register() {
       <h2 className="mb-4 text-center">Register</h2>
 
       <form onSubmit={handleSubmit} className="mx-auto" style={{ maxWidth: "400px" }}>
-        {/* shows validation or Firebase errors above the form */}
+        {/* Displays validation or Firebase errors */}
         {error && <div className="alert alert-danger">{error}</div>}
 
         <div className="mb-3">
@@ -110,7 +129,7 @@ export default function Register() {
 
         <div className="mb-3">
           <label className="form-label">Email</label>
-          {/* type=email gives minimal browser validation, but we still do our own check */}
+          {/* type="email" gives basic browser validation */}
           <input type="email" ref={emailRef} className="form-control" placeholder="you@example.com" />
         </div>
 
@@ -131,14 +150,14 @@ export default function Register() {
 
         <div className="mb-4">
           <label className="form-label">Role</label>
-          {/* selecting between client/coach determines how profile is stored later */}
+          {/* Determines whether the user is registered as a client or a coach */}
           <select value={role} onChange={(e) => setRole(e.target.value)} className="form-select">
             <option value="client">Client</option>
             <option value="coach">Coach</option>
           </select>
         </div>
 
-        {/* triggers handleSubmit */}
+        {/* Submits the registration form */}
         <button type="submit" className="btn btn-primary w-100">
           Register
         </button>

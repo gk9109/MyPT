@@ -1,24 +1,32 @@
-// SearchPage.jsx
-// ----------------------------------------------------------
-// This is the main page for clients to search for coaches.
-// It holds the search results state and connects the
-// SearchBar (input + filter) with SearchResults (output).
-// ----------------------------------------------------------
-
 import React, { useState } from "react";
 import SearchBar from "../../componenets/clients/SearchBar";
 import SearchResults from "../../componenets/clients/SearchResults";
 
+// SearchPage
+// What this component does:
+// -> Client-facing page for searching coaches.
+// -> Holds the search results state.
+// -> Coordinates between SearchBar (input/search logic) and SearchResults (display).
+//
+// Where it's used:
+// -> Client routes/pages (coach discovery).
+//
+// Notes:
+// -> Search logic is handled inside SearchBar.
+// -> This page only stores results and passes them down to SearchResults.
 export default function SearchPage() {
-  // stores the array of results returned from the SearchBar
+  // Array of coaches returned from the search
   const [results, setResults] = useState([]);
 
   return (
     <div>
-      {/* search section (input + filter + button) */}
+      {/* SearchBar:
+        -> Handles user input and filtering logic.
+        -> Updates results state via setResults */}
       <SearchBar setResults={setResults} />
 
-      {/* results section (cards of matching coaches) */}
+      {/* SearchResults:
+        -> Displays matching coaches based on results */}
       <SearchResults results={results} />
     </div>
   );

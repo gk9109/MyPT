@@ -4,14 +4,14 @@ import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../firebase/config";
 
 // AuthContext.jsx
-// Watches Firebase Auth state (login/logout).
-// Uses helper (resolveProfileAndRole) to fetch the user’s Firestore doc and role.
-// Stores the merged user { uid, email, role, ...profile } in React context.
-// Makes this user object global across the app via AuthProvider.
-// Provides: { user, loading, logout } that any component can access with useAuth().
+// What this file does:
+// -> Listens to Firebase Auth login/logout changes.
+// -> Fetches the user's profile + role from Firestore.
+// -> Merges Auth data + Firestore data into ONE global user object.
+// -> Exposes { user, loading, logout } to the entire app via React Context.
 
-
-//this creates aglobal var (AuthContext) that can contain user objexts, loading bools, and logout functions
+// Creates a global context object.
+// Default values are only used BEFORE AuthProvider runs.
 const AuthContext = createContext({
   user: null,
   loading: true,
@@ -20,41 +20,33 @@ const AuthContext = createContext({
   setSelectedClient: () => {}
 });
 
-
-
-// Check Firestore profile and return role + profile data
+// Resolve role + profile from Firestore
 async function resolveProfileAndRole(uid) {
-  // 1. Look in coaches
   const coachSnap = await getDoc(doc(db, "coaches", uid));
   if (coachSnap.exists()) {
     return { role: "coach", profile: coachSnap.data() };
   }
 
-  // 2. Look in clients
   const clientSnap = await getDoc(doc(db, "clients", uid));
   if (clientSnap.exists()) {
     return { role: "client", profile: clientSnap.data() };
   }
 
-  // 3. Look in admins
   const adminSnap = await getDoc(doc(db, "admins", uid));
   if (adminSnap.exists()) {
     return { role: "admin", profile: adminSnap.data() };
   }
-
-  // 4. Not found
   return { role: null, profile: {} };
 }
 
-
-//Listens for login/logout with onAuthStateChanged.
-//Resolves role + profile from Firestore.
-//Stores merged user object in context.
-//Provides { user, loading, logout } to the app.
-
+// Listens for login/logout with onAuthStateChanged.
+// Resolves role + profile from Firestore.
+// Stores merged user object in context.
+// Provides { user, loading, logout } to the app.
 export function AuthProvider({ children }) {
-  // Local state for the current user and a loading flag
+  // Global user object (merged Auth + Firestore)
   const [user, setUser] = useState(null);
+  // While Firebase is still checking auth state
   const [loading, setLoading] = useState(true);
   // these are passed to "/componenets/coach/clentCard" and "/pages/coaches/coacheSideClientProfile"
   const [selectedClient, setSelectedClient] = useState(null);
@@ -62,8 +54,12 @@ export function AuthProvider({ children }) {
 
   // Run once when the component mounts
   useEffect(() => {
-    // onAuthStateChanged -> Subscribe to Firebase Auth changes (login/logout)
-    // auth from config.js
+    // onAuthStateChanged(auth, callback)
+    // -> Subscribes to Firebase Auth state changes.
+    // -> Triggered on: page refresh, login, logout.
+    // -> Returns: unsubscribe function.
+    
+    // "user" parameter here is a Firebase User object OR null.
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         // Case 1: no user is logged in
@@ -73,7 +69,7 @@ export function AuthProvider({ children }) {
       }
 
       try {
-        // Case 2: user is logged in → resolve role/profile from Firestore
+        // Case 2: user is logged in -> resolve role/profile from Firestore
         const { role, profile } = await resolveProfileAndRole(user.uid);
 
         // Merge Firebase Auth data + Firestore profile into one object
@@ -120,6 +116,5 @@ export function AuthProvider({ children }) {
     </AuthContext.Provider>
   );
 }
-
 
 export const useAuth = () => useContext(AuthContext);

@@ -1,7 +1,41 @@
 import { Modal, Button, Form } from "react-bootstrap";
 
+// EventModal
+// What this component does:
+// -> A pop-up modal for creating/editing an appointment (event).
+// -> Shows a small form (title, start time, end time) + action buttons (save/cancel/delete).
+//
+// Where it's used:
+// -> Opened from the Schedule page / calendar when user creates or clicks an existing event.
+// -> Used as the UI layer only (logic stays in the parent page/component).
+//
+// Props:
+// show (boolean)
+// -> Controls if the modal should be visible.
+//
+// mode ("create" | "edit")
+// -> Decides title text + whether to show the "Delete" button.
+//
+// form (object)
+// -> Holds current input values (title, startLocal, endLocal).
+//
+// onChange (function(field, value))
+// -> Updates the parent form state when user types.
+//
+// onClose (function)
+// -> Closes the modal (used by X button, backdrop click, and Cancel button).
+//
+// onSave (function)
+// -> Saves the current form (create/update event).
+//
+// onDelete (function)
+// -> Deletes the current event (only used in edit mode).
+//
+// Notes:
+// -> We use React-Bootstrap's Modal for consistent Bootstrap styling + built-in modal behavior.
+// -> "if (!show) return null" avoids rendering the modal at all when closed (no hidden DOM).
 export default function EventModal({ show, mode, form, onChange, onClose, onSave, onDelete }) {
-  // Mode -> create/edit
+  // If modal is closed -> render nothing
   if (!show) return null;
 
   return (

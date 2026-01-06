@@ -42,4 +42,3 @@ export const auth = getAuth(app);
 // Use this `storage` object to upload and download files (videos, images, etc.)
 // from Firebase Storage. It connects the app to your project's storage bucket.
 export const storage = getStorage(app);
-

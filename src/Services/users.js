@@ -1,11 +1,19 @@
-// src/Services/users.js
 import { db } from "../firebase/config";
 import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
 import { serverTimestamp } from "firebase/firestore";
 
-//this file is for user handling functions
+// SERVICES: users.js
+// -> Firestore helper functions for user profiles.
+// -> Users are stored in different collections based on role:
+//    -> "coaches" collection
+//    -> "clients" collection
+// -> This file builds and manages user profile objects.
 
-// builds one clean user object for the "users" collection
+// makeUserProfile
+// -> Builds a clean user object using a unified schema.
+// -> Used when creating a new user profile.
+// -> searchName is used for filtering/searching users later.
+
 export function makeUserProfile({
   uid,
   email,
@@ -15,13 +23,14 @@ export function makeUserProfile({
   phone = "",
   location = "",
 }) {
-  // build a lower-case "first last" value used for search
+  // Build a normalized "first last" string for search
+  // -> lowercase, trimmed, single spaces only
   const searchName = `${firstName} ${lastName}`
     .trim()
     .replace(/\s+/g, " ")
     .toLowerCase();
 
-  // this is the object that will be saved in Firestore
+  // Final user object saved in Firestore
   return {
     uid,
     role,
@@ -31,48 +40,55 @@ export function makeUserProfile({
     searchName,
     phone,
     location,
-    createdAt: serverTimestamp(), // Firestore will fill this on the server
+    createdAt: serverTimestamp(), // server-side timestamp
   };
 }
 
+// collectionByRole
+// -> Returns the correct collection name based on user role.
+// -> coach -> "coaches"
+// -> anything else -> "clients"
+const collectionByRole = (role) => String(role || "").toLowerCase() === "coach" ? "coaches" : "clients";
 
-//gets a role (string), if role == coach return "coaches", else, return "clients"
-const collectionByRole = (role) =>
-  String(role || "").toLowerCase() === "coach" ? "coaches" : "clients";
-
-//creates user obj user user schema, setting it in correct collection and returning user object
+// createUserProfile
+// -> Creates a new user profile document.
+// -> Writes to: coaches/{uid} OR clients/{uid}
+// -> Overwrites any existing doc to ensure a clean schema.
 export async function createUserProfile({ uid, email, role, firstName, lastName, phone, location }) {
-  // setting a doc ref
+  // Build document reference based on role
   const ref = doc(db, collectionByRole(role), uid);
-  // creates user profile with schema from /models/users
+  // Build user object using shared schema
   const profile = makeUserProfile({ uid, email, role, firstName, lastName, phone, location });
-  // overwrite doc with a clean profile object
+  // Save profile (no merge -> enforce schema)
   await setDoc(ref, profile, { merge: false });
   //return user object
   return profile;
 }
 
-// getting user obj from right collection, if doesnt exist, return null
+// getUserProfile
+// -> Fetches a user profile regardless of role.
+// -> Tries "coaches" first, then "clients".
+// -> Returns user object or null if not found.
 export async function getUserProfile(uid) {
-  // creating doc ref
+  // Try coach collection first
   let ref = doc(db, "coaches", uid);
-  // getting doc
   let snap = await getDoc(ref);
-  // returning doc data if do exists
+
   if (snap.exists()) return snap.data();
 
-  //if doc doenst exist, user different ref
+  // Fallback to client collection
   ref = doc(db, "clients", uid);
-  // get doc
   snap = await getDoc(ref);
+
   // if doc exists, return its data, else return null
   return snap.exists() ? snap.data() : null;
 }
 
-// update file in collection based on role
+// updateUserProfile
+// -> Updates an existing user profile.
+// -> Uses role to decide which collection to update.
 export async function updateUserProfile(uid, patch, role) {
   // if role has value, call collectionByRole and set col to "coaches" or "ckients", if not then null
   const col = role ? collectionByRole(role) : null;
-  // update doc
   return updateDoc(doc(db, col, uid), patch);
 }

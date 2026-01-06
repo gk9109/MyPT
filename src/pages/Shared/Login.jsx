@@ -6,22 +6,42 @@ import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "../../firebase/AuthContext";
 import { Link } from "react-router-dom";
 
-
+// Login
+// What this component does:
+// -> Provides email/password login using Firebase Auth.
+// -> Validates basic input before attempting login.
+// -> Checks which Firestore collection the user belongs to (coach/client/admin).
+// -> Displays errors and loading state during sign-in.
+//
+// Where it's used:
+// -> Public route (/login).
+// -> Entry point for all user roles.
+//
+// Notes:
+// -> Actual navigation after login is handled elsewhere (AuthGate / role-based routes).
+// -> This file only authenticates and verifies user existence in Firestore.
 export default function Login() {
+  // Global auth state (not directly used here, but kept for consistency)
   const { user } = useAuth();
+  // Refs for uncontrolled form inputs
   const emailRef = useRef();
   const passwordRef = useRef();
+  // UI state
   const [error, setError] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
+  // Router navigation helper
   const navigate = useNavigate();
 
+  // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
+    // Read values from input refs
     const email = emailRef.current.value;
     const password = passwordRef.current.value;
 
+    // Basic client-side validation
     if (!email || !password) {
       setError("Please enter both email and password.");
       return;
@@ -29,10 +49,15 @@ export default function Login() {
 
     try {
       setIsSigningIn(true);
+
+      // signInWithEmailAndPassword(auth, email, password)
+      // -> Authenticates the user with Firebase Auth
+      // -> Returns: UserCredential
       const userCred = await signInWithEmailAndPassword(auth, email, password);
       const user = userCred.user;
 
-      // Check if user is a coach
+      // Check if user exists in "coaches" collection
+      // -> Used to determine role and route access
       const coachDocRef = doc(db, "coaches", user.uid);
       const coachDoc = await getDoc(coachDocRef);
       if (coachDoc.exists()) {
@@ -40,7 +65,7 @@ export default function Login() {
         // return;
       }
 
-      // Check if user is a client
+      // Check if user exists in "clients" collection
       const clientDocRef = doc(db, "clients", user.uid);
       const clientDoc = await getDoc(clientDocRef);
       if (clientDoc.exists()) {
@@ -48,7 +73,7 @@ export default function Login() {
         // return;
       }
 
-      // Check if user is an admin (fixed collection name)
+      // Check if user exists in "admins" collection
       console.log("Checking admin:", user.uid);
       const adminDocRef = doc(db, "admins", user.uid);
       const adminDoc = await getDoc(adminDocRef);
@@ -58,13 +83,14 @@ export default function Login() {
         // return;
       }
 
-      // No match found
+      // If user exists in Auth but not in any Firestore role collection
       setError("User data not found in any collection.");
 
     } catch (err) {
       console.error(err);
       setError("Login failed: " + err.message);
     } finally {
+      // Reset loading state
       setIsSigningIn(false);
     }
   };
@@ -76,8 +102,10 @@ export default function Login() {
           <div className="card shadow">
             <div className="card-body p-4">
               <h3 className="text-center mb-4">Login to Your Account</h3>
+              {/* Error message */}
               {error && <div className="alert alert-danger">{error}</div>}
 
+              {/* Login form */}
               <form onSubmit={handleSubmit}>
                 <div className="mb-3">
                   <label className="form-label">Email</label>
@@ -108,7 +136,8 @@ export default function Login() {
                     {isSigningIn ? "Logging in..." : "Login"}
                   </button>
                 </div>
-
+                
+                {/* Password reset navigation */}
                 <div className="text-center mt-3">
                   <Link to="/PasswordReset" className="text-muted">
                     Forgot/reset password?
