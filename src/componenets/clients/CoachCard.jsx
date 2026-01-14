@@ -5,6 +5,7 @@ import { db } from "../../firebase/config";
 import { doc, getDoc } from "firebase/firestore";
 import { SUBS_COLLECTION, subId } from "../../Services/subscriptions";
 import { useNavigate } from "react-router-dom";
+import CoachAvatar from "../coach/CoachAvater";
 
 // CoachCard is rendered in the client coach list.
 // This componenet will be associated with each coach in the system and displayed with their details,
@@ -32,6 +33,13 @@ export default function CoachCard({ coach, mode }) {
     navigate(`/chat/${subscriptionId}`); // navigation to chat
   };
 
+  const onViewProfile = () => {
+    setSelectedCoach(coach);
+    localStorage.setItem("selectedCoach", JSON.stringify(coach));
+    navigate(`/coach-profile/${coach.uid}`);
+  };
+
+
   if (!coach) return <p>no coaches in list</p>;
 
   // pull common fields out of the coach object (with safe defaults)
@@ -44,6 +52,8 @@ export default function CoachCard({ coach, mode }) {
     role = "",
     uid = "",
     createdAt,
+    profilePicUrl = "",
+    aboutMe = "",
   } = coach;
 
   // check subscription status on mount / when user or coach changes
@@ -109,68 +119,96 @@ export default function CoachCard({ coach, mode }) {
   const name = `${firstName} ${lastName}`.trim() || "(Unnamed)";
   const initials = (firstName?.[0] || "").toUpperCase() + (lastName?.[0] || "").toUpperCase();
 
+  // aboutMe preview (first ~90 chars)
+  const aboutPreview = aboutMe?.trim()
+    ? aboutMe.trim().length > 90
+      ? aboutMe.trim().slice(0, 90) + "..."
+      : aboutMe.trim()
+    : "";
+
   return (
     <div className="card shadow-sm h-100">
       <div className="card-header">
-      <div className="card-body d-flex">
-        {/* Avatar */}
-        <div
-          className="rounded-circle d-flex align-items-center justify-content-center me-3"
-          style={{ width: 56, height: 56, background: "#eef2ff", fontWeight: 600 }}
-        >
-          {initials || "?"}
-        </div>
-
-        <div className="flex-grow-1">
-          <div className="d-flex align-items-center justify-content-between">
-            <h5 className="card-title mb-0">{name}</h5>
-            {role && <span className="badge bg-primary">{role}</span>}
+        <div className="card-body d-flex">
+          {/* Avatar */}
+          <div className="me-3" style={{ width: 60, height: 60 }}>
+            {profilePicUrl ? (
+              <img
+                src={profilePicUrl}
+                alt={name}
+                style={{
+                  width: 60,
+                  height: 60,
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                }}
+              />
+            ) : (
+              // fallback to your avatar component (or initials if needed)
+              <div
+                className="rounded-circle d-flex align-items-center justify-content-center"
+                style={{ width: 56, height: 56, background: "#eef2ff", fontWeight: 600 }}
+              >
+                {/* if your CoachAvatar is good, use it. if not, initials still work */}
+                <CoachAvatar firstName={firstName} lastName={lastName} />
+              </div>
+            )}
           </div>
 
-          {location && <div className="text-muted small mt-1">{location}</div>}
+          <div className="flex-grow-1">
+            <div className="d-flex align-items-center justify-content-between">
+              <h5 className="card-title mb-0">{name}</h5>
+              {role && <span className="badge bg-primary">{role}</span>}
+            </div>
 
-          <div className="mt-2">
-            {email && (
-              <div className="small">
-                <i className="bi bi-envelope me-1" /> {email}
-              </div>
-            )}
-            {phone && (
-              <div className="small">
-                <i className="bi bi-telephone me-1" /> {phone}
-              </div>
-            )}
+            {location && <div className="text-muted small mt-1">{location}</div>}
+
+            <div className="mt-2">
+              {email && (
+                <div className="small">
+                  <i className="bi bi-envelope me-1" /> {email}
+                </div>
+              )}
+              {phone && (
+                <div className="small">
+                  <i className="bi bi-telephone me-1" /> {phone}
+                </div>
+              )}
+
+              {created && (
+                <div className="small text-muted">
+                  <i className="bi bi-calendar me-1" /> Joined {created}
+                </div>
+              )}
+            </div>
+
+            {/* About Me preview */}
+            {aboutPreview && <div className="small text-muted mt-2">{aboutPreview}</div>}
+
+            <div className="mt-3 d-flex gap-2">
+              <button className="btn btn-sm btn-primary" onClick={() => onViewProfile()}>
+                View profile
+              </button>
             
-            {created && (
-              <div className="small text-muted">
-                <i className="bi bi-calendar me-1" /> Joined {created}
-              </div>
-            )}
-          </div>
-
-          <div className="mt-3 d-flex gap-2">
-           
               <button
                 className={`btn btn-sm ${isSubscribed ? "btn-danger" : "btn-outline-secondary"}`}
                 onClick={toggleSubscription}
               >
                 {isSubscribed ? "Unsubscribe" : "Subscribe"}
               </button>
-         
-
-            
+          
               <button className="btn btn-sm btn-primary" onClick={() => onSelect()}>
-                Select
+                View plans
               </button>
-              
+
               <button className="btn btn-sm btn-primary" onClick={() => onChat()}>
                 Chat
               </button>
-           
-          </div>
+            
+            </div>
 
+          </div>
         </div>
-      </div>
       </div>
     </div>
   );

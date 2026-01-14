@@ -29,7 +29,7 @@ export default function Home() {
           Welcome to <span className="text-primary">MyPT</span>
         </h1>
         <p className="mb-4">
-          A platform for personal trainers and trainees — create, track,
+          A platform for personal trainers and trainees - create, track,
           and achieve your fitness goals.
         </p>
 

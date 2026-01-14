@@ -1,161 +1,228 @@
-import { useState, useEffect } from "react";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { useEffect, useState } from "react";
 import { updateEmail } from "firebase/auth";
-import { db } from "../../firebase/config";
 import { useAuth } from "../../firebase/AuthContext";
 import { toast } from "react-toastify";
+import { getCoachProfile, saveCoachProfile, uploadProfilePic, uploadGalleryImage, deleteByPath }
+from "../../Services/coachProfileService";
+import EditProfile from '../../componenets/coach/EditProfile';
+import ProfileGallery from '../../componenets/coach/ProfileGallery';
+import CoachAvatar from "../../componenets/coach/CoachAvater";
 
-// CoachProfilePage
-// What this component does:
-// -> Displays and edits the logged-in coach's profile.
-// -> Loads profile data from Firestore.
-// -> Allows updating profile fields (name, email, phone, location).
-// -> Syncs email changes with Firebase Auth and Firestore.
-//
-// Where it's used:
-// -> Coach routes/pages (profile settings).
-//
-// Notes:
-// -> Email is stored in BOTH Firebase Auth and Firestore.
-// -> updateEmail updates Auth, updateDoc updates Firestore.
-// -> searchName is updated for search/filter functionality.
 export default function CoachProfilePage() {
-  // Logged-in coach from AuthContext
   const { user } = useAuth();
-  // Page-level loading flag
   const [loading, setLoading] = useState(true);
+  const [selectedGalleryFile, setSelectedGalleryFile] = useState(null);
 
-  // Local form state (controlled inputs)
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
     email: "",
     phone: "",
-    location: ""
+    location: "",
+    aboutMe: "",
+
+    profilePicUrl: "",
+    profilePicPath: "",
+
+    gallery: [] // [{ url, path }]
   });
 
-  // Fetch coach profile data on mount
+  // Fetch coach once
   useEffect(() => {
-    const fetchCoach = async () => {
+    const run = async () => {
       try {
-        // doc(db, "coaches", uid)
-        // -> Reference to this coach's Firestore document
-        const ref = doc(db, "coaches", user.uid);
+        const data = await getCoachProfile(user.uid);
 
-        // getDoc(docRef)
-        // -> Fetches the coach document
-        // -> Returns: DocumentSnapshot
-        const snap = await getDoc(ref);
-
-        if (snap.exists()) {
-          const data = snap.data();
-
-          // Populate form with existing Firestore data
+        if (data) {
           setForm({
             firstName: data.firstName || "",
             lastName: data.lastName || "",
+            email: data.email || user.email || "",
             phone: data.phone || "",
             location: data.location || "",
-            email: data.email || user.email
+            aboutMe: data.aboutMe || "",
+
+            profilePicUrl: data.profilePicUrl || "",
+            profilePicPath: data.profilePicPath || "",
+
+            gallery: Array.isArray(data.gallery) ? data.gallery : []
           });
         }
-        setLoading(false);
       } catch (err) {
         console.log(err);
+        toast.error("Failed to load profile");
+      } finally {
         setLoading(false);
       }
     };
-    fetchCoach();
+
+    run();
   }, [user.uid, user.email]);
 
-  // Update form state as the user types
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  // Save profile changes
+  // Upload profile pic -> update state immediately (reactive)
+  const handleUploadProfilePic = async (file) => {
+    if (!file) return;
+
+    try {
+      const { url, path } = await uploadProfilePic(user.uid, file, form.profilePicPath);
+
+      // 1) reactive UI
+      setForm((prev) => ({ ...prev, profilePicUrl: url, profilePicPath: path }));
+
+      // 2) persist immediately so it survives refresh
+      await saveCoachProfile(user.uid, { profilePicUrl: url, profilePicPath: path });
+
+      toast.success("Profile picture uploaded!");
+    } catch (err) {
+      console.log(err);
+      toast.error("Failed to upload profile picture");
+    }
+  };
+
+  // Remove profile pic -> delete from storage + clear Firestore + clear state
+  const handleRemoveProfilePic = async () => {
+    try {
+      // 1) delete from Storage (only if we have a path)
+      if (form.profilePicPath) {
+        await deleteByPath(form.profilePicPath);
+      }
+
+      // 2) reactive UI
+      setForm((prev) => ({ ...prev, profilePicUrl: "", profilePicPath: "" }));
+
+      // 3) persist (so refresh returns to avatar)
+      await saveCoachProfile(user.uid, { profilePicUrl: "", profilePicPath: "" });
+
+      toast.success("Profile picture removed!");
+    } catch (err) {
+      console.log(err);
+      toast.error("Failed to remove profile picture");
+    }
+  };
+
+
+  // Upload gallery image -> update state immediately (reactive)
+  const handleAddGalleryImage = async () => {
+    if (!selectedGalleryFile) return;
+
+    try {
+      const { url, path } = await uploadGalleryImage(user.uid, selectedGalleryFile);
+
+      // build from the latest state (prev), not from form.gallery
+      let updatedGallery = [];
+
+      setForm((prev) => {
+        updatedGallery = [...prev.gallery, { url, path }];
+        return { ...prev, gallery: updatedGallery };
+      });
+
+      // persist to Firestore using the same updated array
+      await saveCoachProfile(user.uid, { gallery: updatedGallery });
+
+      // 3) reset picker
+      setSelectedGalleryFile(null);
+
+      toast.success("Gallery image added!");
+    } catch (err) {
+      console.log(err);
+      toast.error("Failed to add gallery image");
+    }
+  };
+
+
+  // Remove gallery image -> delete storage + remove from state
+  const handleRemoveGalleryImage = async (idx) => {
+    const item = form.gallery[idx];
+    if (!item) return;
+
+    try {
+      // 1) delete from Storage
+      if (item.path) await deleteByPath(item.path);
+
+      // 2) reactive UI
+      const updatedGallery = form.gallery.filter((_, i) => i !== idx);
+      setForm((prev) => ({ ...prev, gallery: updatedGallery }));
+
+      // 3) persist to Firestore
+      await saveCoachProfile(user.uid, { gallery: updatedGallery });
+
+      toast.success("Gallery image removed!");
+    } catch (err) {
+      console.log(err);
+      toast.error("Failed to remove gallery image");
+    }
+  };
+
+
   const handleSave = async () => {
     try {
-      const ref = doc(db, "coaches", user.uid);
-
-      // If email was changed, update Firebase Auth as well
       if (form.email !== user.email) {
-        // updateEmail(user, newEmail)
-        // -> Updates the email in Firebase Auth
-        // -> Returns: Promise<void>
         await updateEmail(user, form.email);
       }
 
-      // updateDoc(docRef, data)
-      // -> Updates specific fields in Firestore
-      await updateDoc(ref, {
+      await saveCoachProfile(user.uid, {
         firstName: form.firstName,
         lastName: form.lastName,
+        email: form.email,
         phone: form.phone,
         location: form.location,
-        email: form.email,
+        aboutMe: form.aboutMe,
+
+        // saved for CoachCard later
+        profilePicUrl: form.profilePicUrl,
+        profilePicPath: form.profilePicPath,
+
+        gallery: form.gallery,
+
         searchName: `${form.firstName} ${form.lastName}`.toLowerCase()
       });
 
       toast.success("Profile updated!");
     } catch (err) {
       console.log(err);
-      toast.error("Failed to update profile");
+      toast.error("Failed to save profile");
     }
   };
 
-  // Loading state
   if (loading) return <p>Loading...</p>;
+
+  const coachTitle = form.firstName ? `${form.firstName} ${form.lastName}` : "Coach Profile";
 
   return (
     <div className="container mt-4">
-      <h2 className="fw-bold mb-4">Coach Profile</h2>
+      <div className="d-flex align-items-center gap-3 mb-4">
+      <CoachAvatar src={form.profilePicUrl} size={100} />
+      <div>
+        <h2 className="fw-bold mb-0">{coachTitle}</h2>
+      </div>
+    </div>
 
       <div className="card p-4 shadow-sm">
-
-        <label className="mb-1">First Name</label>
-        <input
-          name="firstName"
-          value={form.firstName}
+        <EditProfile
+          form={form}
           onChange={handleChange}
-          className="form-control mb-3"
+          onUploadProfilePic={handleUploadProfilePic}
+          onRemoveProfilePic={handleRemoveProfilePic}
         />
 
-        <label className="mb-1">Last Name</label>
-        <input
-          name="lastName"
-          value={form.lastName}
-          onChange={handleChange}
-          className="form-control mb-3"
+        <ProfileGallery
+          gallery={form.gallery}
+          selectedFile={selectedGalleryFile}
+          onSelectFile={setSelectedGalleryFile}
+          onAdd={handleAddGalleryImage}
+          onRemoveGalleryImage={handleRemoveGalleryImage}
         />
 
-        <label className="mb-1">Email</label>
-        <input
-          name="email"
-          value={form.email}
-          onChange={handleChange}
-          className="form-control mb-3"
-        />
+        <div className="mt-4">
+          <button className="btn btn-primary w-100" onClick={handleSave}>
+            Save Changes
+          </button>
+        </div>
 
-        <label className="mb-1">Phone Number</label>
-        <input
-          name="phone"
-          value={form.phone}
-          onChange={handleChange}
-          className="form-control mb-3"
-        />
-
-        <label className="mb-1">Location</label>
-        <input
-          name="location"
-          value={form.location}
-          onChange={handleChange}
-          className="form-control mb-4"
-        />
-
-        <button className="btn btn-primary w-100" onClick={handleSave}>
-          Save Changes
-        </button>
       </div>
     </div>
   );

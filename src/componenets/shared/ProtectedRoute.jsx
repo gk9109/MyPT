@@ -35,7 +35,7 @@ export default function ProtectedRoute({ allow, children }) {
   // If user is not logged in -> redirect to login
   // "replace" avoids keeping the blocked page in browser history
   // "state.from" remembers the original page for post-login redirect
-  if (!user) return <Navigate to="/login" replace state={{ from: loc }} />;
+  if (!user) return <Navigate to="/home" replace state={{ from: loc }} />;
 
   // If a role restriction exists -> validate user role
   const role = user.role?.toLowerCase();

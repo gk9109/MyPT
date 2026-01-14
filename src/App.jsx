@@ -21,7 +21,7 @@ import SchedulePage from './pages/Coaches/SchedulePage';
 import ClientProfilePage from './pages/Clients/ClientProfilePage';
 import PasswordReset from './pages/Shared/PasswordReset';
 import CoachProfilePage from './pages/Coaches/CoachProfilePage';
-
+import ClientCoachProfileView from './componenets/clients/ClientSideCoachProfile';
 
 
 function App() {
@@ -42,8 +42,6 @@ function App() {
           
           {/* any logged in user */}
           <Route element={<ProtectedRoute />}>
-            
-
             {/* The colon : means this part is a parameter */}
             <Route path="/chat/:subscriptionId" element={<ChatPage />} />
           </Route>
@@ -65,9 +63,8 @@ function App() {
             <Route path='/search' element={<SearchPage/>} />
             <Route path='/coach-list' element={<CoachListPage/>} />
             <Route path='/plans' element={<CoachSetUp/>} />
-            {/* <Route path='/profile' element={<ClientProfilePage />} /> */}
             <Route path='/client/profile' element={<ClientProfilePage />} />
-            {/* <Route path='/daily-article' element={<ArticlePage />} /> */}
+            <Route path='coach-profile/:coachUid' element={<ClientCoachProfileView />} />
           </Route>
 
           {/* admin only */}
@@ -75,7 +72,6 @@ function App() {
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/reports" element={<Reports />} />
             <Route path="/admin/users" element={<UserList />} />
-            {/* <Route path='/client/profile' element={<Profile />} /> */}
           </Route>
                  
         </Routes>
